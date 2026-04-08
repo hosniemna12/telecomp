@@ -1,6 +1,5 @@
 <?php
 
-
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Livewire\Auth\Login;
@@ -15,8 +14,7 @@ use App\Livewire\Profile\Index as ProfileIndex;
 use App\Livewire\Outils\VerificateurRib;
 use App\Livewire\Profile\Show as ProfileShow;
 use App\Livewire\Audit\Index as AuditIndex;
-
-
+use App\Livewire\Rejets\Pacs004Generator;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -36,6 +34,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', App\Livewire\Dashboard::class)
         ->name('dashboard');
 
+    // ── Fichiers ──────────────────────────────────────────────────
+
     Route::get('/fichiers/upload', Upload::class)
         ->middleware('role:admin,operateur')
         ->name('fichiers.upload');
@@ -49,23 +49,49 @@ Route::middleware('auth')->group(function () {
     Route::get('/fichiers/{id}/xml', XmlViewer::class)
         ->name('fichiers.xml');
 
+    // ── Rejets & Pacs.004 ─────────────────────────────────────────
+
     Route::get('/rejets', RejetsIndex::class)
         ->name('rejets.index');
 
+    Route::get('/rejets/pacs004', Pacs004Generator::class)
+        ->middleware('role:admin,operateur')
+        ->name('rejets.pacs004');
+
+    Route::get('/pacs004/{id}/telecharger', function ($id) {
+        $pacs004 = \App\Models\TcPacs004::findOrFail($id);
+        return response()->streamDownload(
+            fn() => print($pacs004->contenu_xml),
+            'pacs004_' . $pacs004->msg_id . '.xml',
+            ['Content-Type' => 'application/xml']
+        );
+    })->name('pacs004.telecharger');
+
+    // ── Stats ─────────────────────────────────────────────────────
+
     Route::get('/stats', StatsIndex::class)
         ->name('stats.index');
+
+    // ── Utilisateurs ──────────────────────────────────────────────
 
     Route::get('/users', UsersIndex::class)
         ->middleware('role:admin')
         ->name('users.index');
 
+    // ── Profil ────────────────────────────────────────────────────
+
     Route::get('/profile', ProfileIndex::class)
         ->name('profile.index');
-        
+
+    // ── Outils ───────────────────────────────────────────────────
+
     Route::get('/outils/rib', VerificateurRib::class)
         ->name('outils.rib');
+
+    // ── Audit ─────────────────────────────────────────────────────
+
     Route::get('/audit', AuditIndex::class)
         ->middleware('role:admin')
-        ->name('audit.index');  
+        ->name('audit.index');
 
 });
