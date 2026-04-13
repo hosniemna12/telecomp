@@ -8,13 +8,13 @@ use App\Livewire\Fichiers\Index;
 use App\Livewire\Fichiers\Show;
 use App\Livewire\Fichiers\XmlViewer;
 use App\Livewire\Rejets\Index as RejetsIndex;
+use App\Livewire\Rejets\Pacs004Generator;
 use App\Livewire\Users\Index as UsersIndex;
 use App\Livewire\Stats\Index as StatsIndex;
 use App\Livewire\Profile\Index as ProfileIndex;
 use App\Livewire\Outils\VerificateurRib;
 use App\Livewire\Profile\Show as ProfileShow;
 use App\Livewire\Audit\Index as AuditIndex;
-use App\Livewire\Rejets\Pacs004Generator;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -50,13 +50,14 @@ Route::middleware('auth')->group(function () {
         ->name('fichiers.xml');
 
     // ── Rejets & Pacs.004 ─────────────────────────────────────────
-
-    Route::get('/rejets', RejetsIndex::class)
-        ->name('rejets.index');
+    // ⚠️ IMPORTANT : pacs004 AVANT rejets index pour éviter conflit
 
     Route::get('/rejets/pacs004', Pacs004Generator::class)
         ->middleware('role:admin,operateur')
         ->name('rejets.pacs004');
+
+    Route::get('/rejets', RejetsIndex::class)
+        ->name('rejets.index');
 
     Route::get('/pacs004/{id}/telecharger', function ($id) {
         $pacs004 = \App\Models\TcPacs004::findOrFail($id);

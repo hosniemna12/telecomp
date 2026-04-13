@@ -9,6 +9,10 @@ use App\Models\TcFichier;
 use App\Models\TcPacs004;
 use App\Services\Pacs004TransformerService;
 use App\Services\AuditService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
+use Illuminate\Contracts\View\Factory;
 
 #[Layout('layouts.app')]
 class Pacs004Generator extends Component
@@ -34,6 +38,7 @@ class Pacs004Generator extends Component
 
     public function updatingRecherche(): void { $this->resetPage(); }
     public function updatingStatut(): void    { $this->resetPage(); }
+    public function updatingTypeValeur(): void { $this->resetPage(); }
 
     // ── Ouvrir modal confirmation ─────────────────────────────────
 
@@ -76,8 +81,9 @@ class Pacs004Generator extends Component
                 $this->messageErreur = $resultat['message'];
             }
 
-        } catch (\Exception $e) {
-            $this->messageErreur = "Erreur : " . $e->getMessage();
+        } catch (\Throwable $e) {
+            Log::error('Erreur génération Pacs.004', ['exception' => $e]);
+            $this->messageErreur = "Erreur : " . ($e->getMessage() ?? 'Erreur inconnue');
         }
 
         $this->showModal = false;
@@ -87,10 +93,12 @@ class Pacs004Generator extends Component
 
     public function voirXml(int $pacs004Id): void
     {
-        $pacs004 = TcPacs004::find($pacs004Id);
-        if ($pacs004) {
+        try {
+            $pacs004 = TcPacs004::findOrFail($pacs004Id);
             $this->xmlContent   = $pacs004->contenu_xml ?? '';
             $this->showXmlModal = true;
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+            $this->dispatch('notification', 'Pacs.004 introuvable');
         }
     }
 
@@ -100,53 +108,78 @@ class Pacs004Generator extends Component
         $this->xmlContent   = '';
     }
 
+    // ── Télécharger ───────────────────────────────────────────────
+
+    public function telecharger(int $pacs004Id): void
+    {
+        $this->redirect(route('pacs004.telecharger', $pacs004Id));
+    }
+
     // ── Marquer envoyé ───────────────────────────────────────────
 
     public function marquerEnvoye(int $pacs004Id): void
     {
-        TcPacs004::where('id', $pacs004Id)
-                 ->update(['statut' => 'ENVOYE']);
+        try {
+            $updated = TcPacs004::where('id', $pacs004Id)
+                                ->update(['statut' => 'ENVOYE']);
 
-        app(AuditService::class)->log(
-            'PACS004_ENVOYE',
-            'PACS004',
-            "Pacs.004 #{$pacs004Id} marqué comme envoyé"
-        );
+            if (!$updated) {
+                $this->dispatch('notification', 'Pacs.004 introuvable');
+                return;
+            }
+
+            app(AuditService::class)->log(
+                'PACS004_ENVOYE',
+                'PACS004',
+                "Pacs.004 #{$pacs004Id} marqué comme envoyé"
+            );
+        } catch (\Throwable $e) {
+            Log::error('Erreur marquage Pacs.004', ['exception' => $e]);
+            $this->dispatch('notification', 'Erreur lors de la mise à jour');
+        }
     }
 
     // ── Render ───────────────────────────────────────────────────
 
-    public function render()
+    public function render(): View|Factory
     {
-        // ✅ Compatible Oracle — whereHas au lieu de having()
-        $fichiers = TcFichier::whereHas('rejets')
-            ->when($this->recherche, fn($q) =>
-                $q->where('nom_fichier', 'like', '%' . $this->recherche . '%')
-            )
-            ->when($this->typeValeur, fn($q) =>
-                $q->where('type_valeur', $this->typeValeur)
-            )
-            ->withCount('rejets')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        try {
+            // Utiliser withCount pour meilleure performance
+            $fichiers = TcFichier::withCount('rejets')
+                ->having('rejets_count', '>', 0)
+                ->when($this->recherche, fn($q) =>
+                    $q->where('tc_fichiers.nom_fichier', 'like', '%' . $this->recherche . '%')
+                )
+                ->when($this->typeValeur, fn($q) =>
+                    $q->where('tc_fichiers.type_valeur', $this->typeValeur)
+                )
+                ->orderBy('tc_fichiers.created_at', 'desc')
+                ->paginate(10);
 
-        $pacs004List = TcPacs004::with('fichier')
-            ->when($this->statut, fn($q) =>
-                $q->where('statut', $this->statut)
-            )
-            ->orderBy('created_at', 'desc')
-            ->paginate(10, ['*'], 'pacs004Page');
+            $pacs004List = TcPacs004::with('fichier')
+                ->when($this->statut, fn($q) =>
+                    $q->where('statut', $this->statut)
+                )
+                ->orderBy('created_at', 'desc')
+                ->paginate(10, ['*'], 'pacs004Page');
 
-        // ✅ Compatible Oracle — whereHas au lieu de having()
-        $stats = [
-            'total_generes'  => TcPacs004::count(),
-            'en_attente'     => TcPacs004::where('statut', 'GENERE')->count(),
-            'envoyes'        => TcPacs004::where('statut', 'ENVOYE')->count(),
-            'fichiers_rejet' => TcFichier::whereHas('rejets')->count(),
-        ];
+            $stats = [
+                'total_generes'  => TcPacs004::count(),
+                'en_attente'     => TcPacs004::where('statut', 'GENERE')->count(),
+                'envoyes'        => TcPacs004::where('statut', 'ENVOYE')->count(),
+                'fichiers_rejet' => TcFichier::has('rejets')->count(),
+            ];
 
-        return view('livewire.rejets.pacs004-generator',
-            compact('fichiers', 'pacs004List', 'stats')
-        );
+            return view('livewire.rejets.pacs004-generator',
+                compact('fichiers', 'pacs004List', 'stats')
+            );
+        } catch (\Throwable $e) {
+            Log::error('Erreur rendu Pacs004Generator', ['exception' => $e]);
+            return view('livewire.rejets.pacs004-generator', [
+                'fichiers' => collect(),
+                'pacs004List' => collect(),
+                'stats' => ['total_generes' => 0, 'en_attente' => 0, 'envoyes' => 0, 'fichiers_rejet' => 0]
+            ]);
+        }
     }
 }
