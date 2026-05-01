@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TcRejet extends Model
 {
@@ -18,21 +19,50 @@ class TcRejet extends Model
         'date_traitement',
     ];
 
-    // Cast automatique
     protected $casts = [
-        'traite'           => 'boolean',
-        'date_traitement'  => 'datetime',
+        'traite'          => 'boolean',
+        'date_traitement' => 'datetime',
     ];
 
-    // Relation → appartient à un fichier
-    public function fichier()
+    public function fichier(): BelongsTo
     {
         return $this->belongsTo(TcFichier::class, 'fichier_id');
     }
 
-    // Relation → appartient à un détail
-    public function detail()
+    public function detail(): BelongsTo
     {
         return $this->belongsTo(TcEnrDetail::class, 'detail_id');
+    }
+
+    // Scopes
+    public function scopeNonTraites($query)
+    {
+        return $query->where('traite', false);
+    }
+
+    public function scopeTraites($query)
+    {
+        return $query->where('traite', true);
+    }
+
+    public function scopeValidation($query)
+    {
+        return $query->where('etape_detection', 'VALIDATION');
+    }
+
+    public function scopeParsing($query)
+    {
+        return $query->where('etape_detection', 'PARSING');
+    }
+
+    // Libellé de l'étape
+    public function getLibelleEtapeAttribute(): string
+    {
+        return match($this->etape_detection) {
+            'PARSING'    => 'Parsing',
+            'VALIDATION' => 'Validation',
+            'SYSTEME'    => 'Système',
+            default      => $this->etape_detection ?? '?',
+        };
     }
 }

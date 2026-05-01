@@ -11,8 +11,7 @@ use App\Services\EnvParserService;
 use App\Services\ValidatorService;
 use App\Services\XmlTransformerService;
 use App\Services\LogService;
-use App\Services\AuditService;
-use App\Services\RibValidatorService;
+use App\Services\ValidationService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,33 +21,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ValidatorInterface::class,   ValidatorService::class);
         $this->app->bind(TransformerInterface::class, XmlTransformerService::class);
         $this->app->bind(LoggerInterface::class,      LogService::class);
-        $this->app->singleton(AuditService::class);
-        $this->app->singleton(RibValidatorService::class);
+        $this->app->singleton(ValidationService::class);
     }
 
-    public function boot(): void
-    {
-        \Illuminate\Support\Facades\Event::listen(
-            \Illuminate\Auth\Events\Login::class,
-            function ($event) {
-                app(AuditService::class)->loginSuccess($event->user->email);
-                \App\Models\LoginHistory::create([
-                    'user_id'    => $event->user->id,
-                    'ip_address' => request()->ip(),
-                    'user_agent' => request()->userAgent(),
-                    'statut'     => 'SUCCESS',
-                    'created_at' => now(),
-                ]);
-            }
-        );
-
-        \Illuminate\Support\Facades\Event::listen(
-            \Illuminate\Auth\Events\Failed::class,
-            function ($event) {
-                app(AuditService::class)->loginFailed(
-                    $event->credentials['email'] ?? 'inconnu'
-                );
-            }
-        );
-    }
+    public function boot(): void {}
 }

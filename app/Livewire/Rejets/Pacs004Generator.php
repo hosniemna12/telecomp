@@ -9,10 +9,7 @@ use App\Models\TcFichier;
 use App\Models\TcPacs004;
 use App\Services\Pacs004TransformerService;
 use App\Services\AuditService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\View\View;
-use Illuminate\Contracts\View\Factory;
 
 #[Layout('layouts.app')]
 class Pacs004Generator extends Component
@@ -36,11 +33,9 @@ class Pacs004Generator extends Component
         'typeValeur' => ['except' => ''],
     ];
 
-    public function updatingRecherche(): void { $this->resetPage(); }
-    public function updatingStatut(): void    { $this->resetPage(); }
+    public function updatingRecherche(): void  { $this->resetPage(); }
+    public function updatingStatut(): void     { $this->resetPage(); }
     public function updatingTypeValeur(): void { $this->resetPage(); }
-
-    // ── Ouvrir modal confirmation ─────────────────────────────────
 
     public function confirmerGeneration(int $fichierId): void
     {
@@ -56,22 +51,30 @@ class Pacs004Generator extends Component
         $this->fichierId = null;
     }
 
-    // ── Générer Pacs.004 ─────────────────────────────────────────
-
-    public function generer(): void
-    {
+    /**
+     * Injection dans la méthode — Livewire résout via le conteneur IoC
+     * Pacs004TransformerService est une classe concrète (pas d'interface)
+     * donc pas besoin de liaison dans AppServiceProvider.
+     */
+    public function generer(
+        Pacs004TransformerService $service,
+        AuditService $audit
+    ): void {
         if (!$this->fichierId) return;
 
         try {
-            $service  = app(Pacs004TransformerService::class);
+            // ↓ Injection utilisée directement — pas de app()
             $resultat = $service->genererPourFichier($this->fichierId);
 
             if ($resultat['succes']) {
                 $this->messageSucces = $resultat['message'];
 
-                app(AuditService::class)->log(
-                    'PACS004_GENERE',
-                    'PACS004',
+                if (isset($resultat['valide_xsd']) && $resultat['valide_xsd'] === false) {
+                    $this->messageSucces .= ' ⚠️ Validation XSD échouée — vérifier les logs.';
+                }
+
+                $audit->log(
+                    'PACS004_GENERE', 'PACS004',
                     "Pacs.004 généré pour fichier #{$this->fichierId} — {$resultat['nb_rejets']} rejet(s)"
                 );
 
@@ -82,23 +85,24 @@ class Pacs004Generator extends Component
             }
 
         } catch (\Throwable $e) {
-            Log::error('Erreur génération Pacs.004', ['exception' => $e]);
-            $this->messageErreur = "Erreur : " . ($e->getMessage() ?? 'Erreur inconnue');
+            Log::error('Erreur génération Pacs.004', [
+                'exception'  => $e->getMessage(),
+                'fichier_id' => $this->fichierId,
+            ]);
+            $this->messageErreur = "Erreur : " . $e->getMessage();
         }
 
         $this->showModal = false;
     }
 
-    // ── Voir XML ─────────────────────────────────────────────────
-
     public function voirXml(int $pacs004Id): void
     {
         try {
-            $pacs004 = TcPacs004::findOrFail($pacs004Id);
+            $pacs004            = TcPacs004::findOrFail($pacs004Id);
             $this->xmlContent   = $pacs004->contenu_xml ?? '';
             $this->showXmlModal = true;
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
-            $this->dispatch('notification', 'Pacs.004 introuvable');
+            $this->messageErreur = 'Pacs.004 introuvable.';
         }
     }
 
@@ -108,58 +112,44 @@ class Pacs004Generator extends Component
         $this->xmlContent   = '';
     }
 
-    // ── Télécharger ───────────────────────────────────────────────
-
-    public function telecharger(int $pacs004Id): void
-    {
-        $this->redirect(route('pacs004.telecharger', $pacs004Id));
-    }
-
-    // ── Marquer envoyé ───────────────────────────────────────────
-
-    public function marquerEnvoye(int $pacs004Id): void
+    /**
+     * Injection AuditService dans la méthode action
+     */
+    public function marquerEnvoye(int $pacs004Id, AuditService $audit): void
     {
         try {
-            $updated = TcPacs004::where('id', $pacs004Id)
-                                ->update(['statut' => 'ENVOYE']);
+            $pacs004 = TcPacs004::findOrFail($pacs004Id);
+            $pacs004->update(['statut' => 'ENVOYE']);
 
-            if (!$updated) {
-                $this->dispatch('notification', 'Pacs.004 introuvable');
-                return;
-            }
-
-            app(AuditService::class)->log(
-                'PACS004_ENVOYE',
-                'PACS004',
-                "Pacs.004 #{$pacs004Id} marqué comme envoyé"
+            $audit->log(
+                'PACS004_ENVOYE', 'PACS004',
+                "Pacs.004 #{$pacs004Id} marqué comme envoyé — MsgId : {$pacs004->msg_id}"
             );
+
+            $this->messageSucces = "Pacs.004 marqué comme envoyé.";
+
         } catch (\Throwable $e) {
-            Log::error('Erreur marquage Pacs.004', ['exception' => $e]);
-            $this->dispatch('notification', 'Erreur lors de la mise à jour');
+            Log::error('Erreur marquage Pacs.004', ['exception' => $e->getMessage()]);
+            $this->messageErreur = 'Erreur lors de la mise à jour.';
         }
     }
 
-    // ── Render ───────────────────────────────────────────────────
-
-    public function render(): View|Factory
+    public function render()
     {
         try {
-            // Utiliser withCount pour meilleure performance
             $fichiers = TcFichier::withCount('rejets')
-                ->having('rejets_count', '>', 0)
+                ->has('rejets')
                 ->when($this->recherche, fn($q) =>
-                    $q->where('tc_fichiers.nom_fichier', 'like', '%' . $this->recherche . '%')
+                    $q->where('nom_fichier', 'like', '%' . $this->recherche . '%')
                 )
                 ->when($this->typeValeur, fn($q) =>
-                    $q->where('tc_fichiers.type_valeur', $this->typeValeur)
+                    $q->where('type_valeur', $this->typeValeur)
                 )
-                ->orderBy('tc_fichiers.created_at', 'desc')
+                ->orderBy('created_at', 'desc')
                 ->paginate(10);
 
             $pacs004List = TcPacs004::with('fichier')
-                ->when($this->statut, fn($q) =>
-                    $q->where('statut', $this->statut)
-                )
+                ->when($this->statut, fn($q) => $q->where('statut', $this->statut))
                 ->orderBy('created_at', 'desc')
                 ->paginate(10, ['*'], 'pacs004Page');
 
@@ -173,12 +163,13 @@ class Pacs004Generator extends Component
             return view('livewire.rejets.pacs004-generator',
                 compact('fichiers', 'pacs004List', 'stats')
             );
+
         } catch (\Throwable $e) {
-            Log::error('Erreur rendu Pacs004Generator', ['exception' => $e]);
+            Log::error('Erreur rendu Pacs004Generator', ['exception' => $e->getMessage()]);
             return view('livewire.rejets.pacs004-generator', [
-                'fichiers' => collect(),
-                'pacs004List' => collect(),
-                'stats' => ['total_generes' => 0, 'en_attente' => 0, 'envoyes' => 0, 'fichiers_rejet' => 0]
+                'fichiers'    => TcFichier::paginate(0),
+                'pacs004List' => TcPacs004::paginate(0),
+                'stats'       => ['total_generes' => 0, 'en_attente' => 0, 'envoyes' => 0, 'fichiers_rejet' => 0],
             ]);
         }
     }

@@ -9,9 +9,9 @@ use App\Services\RibValidatorService;
 #[Layout('layouts.app')]
 class VerificateurRib extends Component
 {
-    public string $rib      = '';
-    public array  $resultat = [];
-    public bool   $verifie  = false;
+    public string $rib       = '';
+    public array  $resultat  = [];
+    public bool   $verifie   = false;
 
     public function verifier(RibValidatorService $validator): void
     {

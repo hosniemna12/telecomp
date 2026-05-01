@@ -6,7 +6,7 @@
     <title>BTL — Connexion</title>
     @livewireStyles
 </head>
-<body style="margin:0;padding:0;background:#0a0d14;min-height:100vh">
+<body style="margin:0;padding:0;background:#0a0d14">
 {{ $slot }}
 @livewireScripts
 </body>

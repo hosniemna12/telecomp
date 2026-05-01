@@ -6,29 +6,34 @@ use Illuminate\Database\Eloquent\Model;
 
 class TcFichier extends Model
 {
-    protected $table = 'tc_fichiers';
+    protected $table = 'TC_FICHIERS';
 
     protected $fillable = [
-        'nom_fichier',
-        'chemin_complet',
-        'type_valeur',
-        'code_enregistrement',
-        'sens',
-        'statut',
-        'code_devise',
-        'date_reception',
+        'nom_fichier', 'chemin_complet', 'type_valeur',
+        'code_enregistrement', 'sens', 'code_devise',
+        'date_operation', 'statut', 'nb_transactions',
+        'nb_rejets', 'montant_total', 'date_reception',
+        'uploaded_by', 'valide_par', 'date_validation',
+        'commentaire_rejet',
     ];
 
-    // ── Relations ─────────────────────────────────────────────────
+    protected $casts = [
+        'date_reception'  => 'datetime',
+        'date_validation' => 'datetime',
+        'created_at'      => 'datetime',
+        'updated_at'      => 'datetime',
+        'montant_total'   => 'decimal:3',
+    ];
 
-    public function enrGlobaux()
-    {
-        return $this->hasMany(TcEnrGlobal::class, 'fichier_id');
-    }
-
-    public function enrDetails()
+    // Relations existantes
+    public function enregistrementsDetails()
     {
         return $this->hasMany(TcEnrDetail::class, 'fichier_id');
+    }
+
+    public function enregistrementsGlobaux()
+    {
+        return $this->hasMany(TcEnrGlobal::class, 'fichier_id');
     }
 
     public function rejets()
@@ -36,75 +41,40 @@ class TcFichier extends Model
         return $this->hasMany(TcRejet::class, 'fichier_id');
     }
 
-    public function xmlProduits()
+    public function xmlProduit()
     {
-        return $this->hasMany(TcXmlProduit::class, 'fichier_id');
+        return $this->hasOne(TcXmlProduit::class, 'fichier_id');
     }
 
-    public function logs()
+    // Nouvelles relations
+    public function uploader()
     {
-        return $this->hasMany(TcLogsTraitement::class, 'fichier_id');
+        return $this->belongsTo(User::class, 'uploaded_by');
     }
 
-    public function pacs004()
+    public function valideur()
     {
-        return $this->hasMany(TcPacs004::class, 'fichier_id');
+        return $this->belongsTo(User::class, 'valide_par');
     }
 
-    // ── Scopes ────────────────────────────────────────────────────
-
-    public function scopeTraites($query)
+    public function commentaires()
     {
-        return $query->where('statut', 'TRAITE');
+        return $this->hasMany(TcCommentaire::class, 'fichier_id');
     }
 
-    public function scopeErreurs($query)
+    public function notifications()
     {
-        return $query->where('statut', 'ERREUR');
+        return $this->hasMany(TcNotification::class, 'fichier_id');
     }
 
-    public function scopeEnAttente($query)
+    // Scopes utiles
+    public function scopeEnAttenteValidation($query)
     {
-        return $query->where('statut', 'EN_ATTENTE');
+        return $query->where('statut', 'EN_ATTENTE_VALIDATION');
     }
 
-    public function scopeEnCours($query)
+    public function scopeParOperateur($query, int $userId)
     {
-        return $query->where('statut', 'EN_COURS');
-    }
-
-    // ── Accesseurs utiles ─────────────────────────────────────────
-
-    public function getLibelleTypeValeurAttribute(): string
-    {
-        return match($this->type_valeur) {
-            '20'         => 'Prélèvement',
-            '30'         => 'Chèque',
-            '31'         => 'Chèque certifié',
-            '32'         => 'Chèque de banque',
-            '33'         => 'Chèque visé',
-            '40'         => 'Lettre de change',
-            '41'         => 'Lettre de change acceptée',
-            '42'         => 'Billet à ordre',
-            '43'         => 'Billet à ordre avalisé',
-            '60', '61'   => 'Virement',
-            default      => 'Type ' . $this->type_valeur,
-        };
-    }
-
-    public function getLibelleStatutAttribute(): string
-    {
-        return match($this->statut) {
-            'EN_ATTENTE' => 'En attente',
-            'EN_COURS'   => 'En cours',
-            'TRAITE'     => 'Traité',
-            'ERREUR'     => 'Erreur',
-            default      => $this->statut,
-        };
-    }
-
-    public function hasPacs004(): bool
-    {
-        return $this->pacs004()->exists();
+        return $query->where('uploaded_by', $userId);
     }
 }

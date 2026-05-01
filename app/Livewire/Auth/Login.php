@@ -5,6 +5,7 @@ namespace App\Livewire\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use App\Services\AuditService;
 
 #[Layout('layouts.guest')]
 class Login extends Component
@@ -20,13 +21,16 @@ class Login extends Component
     ];
 
     protected $messages = [
-        'email.required'    => 'L\'adresse email est obligatoire.',
-        'email.email'       => 'L\'adresse email n\'est pas valide.',
+        'email.required'    => "L'adresse email est obligatoire.",
+        'email.email'       => "L'adresse email n'est pas valide.",
         'password.required' => 'Le mot de passe est obligatoire.',
         'password.min'      => 'Le mot de passe doit contenir au moins 6 caractères.',
     ];
 
-    public function connecter(): void
+    /**
+     * Injection AuditService dans la méthode — bonne pratique Livewire
+     */
+    public function connecter(AuditService $audit): void
     {
         $this->validate();
         $this->erreur = '';
@@ -36,8 +40,13 @@ class Login extends Component
             'password' => $this->password,
         ], $this->remember)) {
             session()->regenerate();
+
+            // ↓ Injection utilisée directement — pas de app()
+            $audit->loginSuccess($this->email);
+
             $this->redirect(route('dashboard'), navigate: true);
         } else {
+            $audit->loginFailed($this->email);
             $this->erreur = 'Email ou mot de passe incorrect.';
         }
     }

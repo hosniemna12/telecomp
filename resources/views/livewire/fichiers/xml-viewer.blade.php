@@ -1,176 +1,137 @@
 <div>
+<style>
+.xml-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.xml-title{font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--text-primary)}
+.xml-subtitle{font-size:12px;color:var(--text-muted);margin-top:4px}
+.xml-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:600;background:var(--gold-dim);color:var(--gold-light);border:1px solid var(--gold)}
+.xml-editor{background:#0d1117;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.xml-toolbar{background:#161b22;border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
+.xml-dots{display:flex;gap:6px}
+.xml-dot{width:12px;height:12px;border-radius:50%}
+.xml-dot.red{background:#ff5f56}
+.xml-dot.yellow{background:#ffbd2e}
+.xml-dot.green{background:#27c93f}
+.xml-filename{font-size:11px;color:#8b949e;font-family:monospace}
+.xml-content{overflow:auto;max-height:75vh}
+.xml-table{width:100%;border-collapse:collapse;font-family:monospace;font-size:12px}
+.xml-table tr:hover td{background:rgba(255,255,255,0.03)}
+.xml-line-num{text-align:right;color:#3d444d;padding:2px 12px;border-right:1px solid #21262d;width:45px;user-select:none;vertical-align:top}
+.xml-line-content{padding:2px 16px;white-space:pre;color:#e6edf3}
+.xml-tag{color:#7ee787}
+.xml-attr{color:#79c0ff}
+.xml-val{color:#a5d6ff}
+.xml-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;text-align:center}
+.xml-empty-icon{width:48px;height:48px;color:var(--text-muted);margin-bottom:12px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);text-decoration:none;padding:6px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-input);transition:all 0.15s}
+.back-btn:hover{color:var(--text-primary);border-color:var(--gold)}
+</style>
 
-    {{-- Bouton retour --}}
-    <div class="mb-6">
-        <a href="{{ route('fichiers.show', $fichier->id) }}"
-           class="text-slate-400 hover:text-white text-sm transition flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15 19l-7-7 7-7"/>
+{{-- Bouton retour --}}
+<div style="margin-bottom:20px">
+    <a href="{{ route('fichiers.show', $fichier->id) }}" class="back-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 19l-7-7 7-7"/>
+        </svg>
+        Retour aux détails
+    </a>
+</div>
+
+{{-- En-tête --}}
+<div class="xml-header">
+    <div>
+        <h1 class="xml-title">Visualiseur XML ISO 20022</h1>
+        <p class="xml-subtitle">{{ $fichier->nom_fichier }}</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+        <span class="xml-badge">{{ $typeMessage }}</span>
+        <button wire:click="telecharger" class="btn btn-secondary btn-sm">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
+            Télécharger
+        </button>
+        <button onclick="copyXml()" class="btn btn-secondary btn-sm">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px">
+                <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span id="copy-label">Copier</span>
+        </button>
+    </div>
+</div>
+
+{{-- Éditeur XML --}}
+@if($xmlFormate)
+<div class="xml-editor">
+    <div class="xml-toolbar">
+        <div class="xml-dots">
+            <span class="xml-dot red"></span>
+            <span class="xml-dot yellow"></span>
+            <span class="xml-dot green"></span>
+        </div>
+        <span class="xml-filename">{{ str_replace('.ENV', '.xml', $fichier->nom_fichier) }}</span>
+        <span style="font-size:11px;color:#8b949e">XML ISO 20022</span>
+    </div>
+    <div class="xml-content">
+        <table class="xml-table">
+            <tbody>
+                @foreach(explode("\n", $xmlFormate) as $numero => $ligne)
+                <tr>
+                    <td class="xml-line-num">{{ $numero + 1 }}</td>
+                    <td class="xml-line-content">@php
+                        $l = htmlspecialchars($ligne);
+                        $l = preg_replace('/(&lt;\/?)([\w:.]+)/', '$1<span class="xml-tag">$2</span>', $l);
+                        $l = preg_replace('/([\w:]+)=(&quot;[^&]*&quot;)/', '<span class="xml-attr">$1</span>=<span class="xml-val">$2</span>', $l);
+                        echo $l;
+                    @endphp</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{{-- Infos --}}
+<div style="display:flex;gap:16px;margin-top:12px">
+    <div style="font-size:12px;color:var(--text-muted)">
+        <span style="color:var(--text-secondary)">Lignes :</span>
+        {{ count(explode("\n", $xmlFormate)) }}
+    </div>
+    <div style="font-size:12px;color:var(--text-muted)">
+        <span style="color:var(--text-secondary)">Taille :</span>
+        {{ number_format(strlen($xmlFormate) / 1024, 1) }} Ko
+    </div>
+    <div style="font-size:12px;color:var(--text-muted)">
+        <span style="color:var(--text-secondary)">Type :</span>
+        {{ $typeMessage }}
+    </div>
+</div>
+
+@else
+<div class="card">
+    <div class="xml-empty">
+        <svg class="xml-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <div style="font-size:14px;font-weight:500;color:var(--text-secondary)">Aucun XML généré pour ce fichier</div>
+        <a href="{{ route('fichiers.show', $fichier->id) }}" class="back-btn" style="margin-top:12px">
             Retour aux détails
         </a>
     </div>
-
-    {{-- En-tête --}}
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-white">XML ISO 20022</h1>
-            <p class="text-slate-400 text-sm mt-1">{{ $fichier->nom_fichier }}</p>
-        </div>
-        <div class="flex items-center gap-3">
-            <span class="bg-purple-600/20 text-purple-400 border border-purple-600/30
-                         text-sm px-4 py-1.5 rounded-full">
-                {{ $typeMessage }}
-            </span>
-            <button
-                wire:click="telecharger"
-                class="bg-blue-600 hover:bg-blue-700 text-white text-sm
-                       px-4 py-2 rounded-lg transition flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                Télécharger XML
-            </button>
-            <button
-                onclick="copyXml()"
-                class="bg-slate-700 hover:bg-slate-600 text-white text-sm
-                       px-4 py-2 rounded-lg transition flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                </svg>
-                <span id="copy-label">Copier</span>
-            </button>
-        </div>
-    </div>
-
-    {{-- Éditeur XML --}}
-    @if($xmlFormate)
-
-        <div class="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden">
-
-            {{-- Barre du haut --}}
-            <div class="bg-slate-800 border-b border-slate-700 px-4 py-2
-                        flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-red-500/70"></div>
-                    <div class="w-3 h-3 rounded-full bg-yellow-500/70"></div>
-                    <div class="w-3 h-3 rounded-full bg-green-500/70"></div>
-                </div>
-                <span class="text-slate-500 text-xs font-mono">
-                    {{ str_replace('.ENV', '.xml', $fichier->nom_fichier) }}
-                </span>
-                <span class="text-slate-500 text-xs">XML ISO 20022</span>
-            </div>
-
-            {{-- Contenu XML --}}
-            <div class="overflow-auto max-h-screen">
-                <table class="w-full text-xs font-mono">
-                    <tbody>
-                        @foreach(explode("\n", $xmlFormate) as $numero => $ligne)
-                            <tr class="hover:bg-slate-800/50 group">
-                                <td class="select-none text-right text-slate-600 px-4 py-0.5
-                                           border-r border-slate-800 w-12
-                                           group-hover:text-slate-500 align-top">
-                                    {{ $numero + 1 }}
-                                </td>
-                                <td class="px-4 py-0.5 whitespace-pre text-slate-300">
-                                    @php
-                                        $l = $ligne;
-                                        // Déclaration XML → violet
-                                        $l = preg_replace(
-                                            '/(&lt;\?xml[^?]*\?&gt;)/',
-                                            '<span class="text-purple-400">$1</span>',
-                                            $l
-                                        );
-                                        // Balises fermantes → bleu clair
-                                        $l = preg_replace(
-                                            '/(&lt;\/[a-zA-Z][a-zA-Z0-9:]*&gt;)/',
-                                            '<span class="text-blue-300">$1</span>',
-                                            $l
-                                        );
-                                        // Balises ouvrantes → bleu
-                                        $l = preg_replace(
-                                            '/(&lt;[a-zA-Z][a-zA-Z0-9:]*(?:\s[^&gt;]*)?\/?&gt;)/',
-                                            '<span class="text-blue-400">$1</span>',
-                                            $l
-                                        );
-                                        // Valeurs texte → blanc
-                                        $l = preg_replace(
-                                            '/(&gt;)([^&<\n]+)(&lt;)/',
-                                            '$1<span class="text-white font-medium">$2</span>$3',
-                                            $l
-                                        );
-                                        // Attributs xmlns → jaune
-                                        $l = preg_replace(
-                                            '/(xmlns(?::[a-z]+)?=&quot;[^&]*&quot;)/',
-                                            '<span class="text-yellow-300">$1</span>',
-                                            $l
-                                        );
-                                    @endphp
-                                    {!! $l !!}
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-        </div>
-
-        {{-- Stats XML --}}
-        <div class="mt-4 grid grid-cols-3 gap-4">
-            <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 text-center">
-                <div class="text-xl font-bold text-white">
-                    {{ substr_count($xmlFormate, "\n") + 1 }}
-                </div>
-                <div class="text-slate-400 text-xs mt-1">Lignes</div>
-            </div>
-            <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 text-center">
-                <div class="text-xl font-bold text-white">
-                    {{ number_format(strlen(html_entity_decode($xmlFormate)) / 1024, 2) }} KB
-                </div>
-                <div class="text-slate-400 text-xs mt-1">Taille</div>
-            </div>
-            <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 text-center">
-                <div class="text-xl font-bold text-purple-400">
-                    {{ $typeMessage }}
-                </div>
-                <div class="text-slate-400 text-xs mt-1">Standard ISO 20022</div>
-            </div>
-        </div>
-
-    @else
-        <div class="bg-slate-800 border border-slate-700 rounded-xl p-16 text-center">
-            <svg class="w-16 h-16 text-slate-600 mx-auto mb-4" fill="none"
-                 stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-            </svg>
-            <p class="text-slate-400 text-sm">Aucun XML généré pour ce fichier</p>
-            <a href="{{ route('fichiers.show', $fichier->id) }}"
-               class="text-blue-400 hover:text-blue-300 text-sm mt-2 inline-block transition">
-                Retour aux détails
-            </a>
-        </div>
-    @endif
-
 </div>
+@endif
 
-{{-- Script copier --}}
 <script>
 function copyXml() {
-    const lignes = document.querySelectorAll('table tbody tr td:last-child');
-    let texte = '';
-    lignes.forEach(td => {
-        texte += td.innerText + '\n';
-    });
-    navigator.clipboard.writeText(texte).then(() => {
-        const label = document.getElementById('copy-label');
-        label.textContent = 'Copié !';
-        setTimeout(() => label.textContent = 'Copier', 2000);
+    const lines = document.querySelectorAll('.xml-line-content');
+    let text = '';
+    lines.forEach(l => text += l.innerText + '\n');
+    navigator.clipboard.writeText(text).then(() => {
+        document.getElementById('copy-label').textContent = 'Copié !';
+        setTimeout(() => document.getElementById('copy-label').textContent = 'Copier', 2000);
     });
 }
 </script>
+</div>

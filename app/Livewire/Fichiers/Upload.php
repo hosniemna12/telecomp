@@ -8,6 +8,13 @@ use Livewire\Attributes\Layout;
 use App\Services\FichierTraitementService;
 use App\Services\AuditService;
 
+/**
+ * Upload — Composant Livewire d'upload et traitement des fichiers SIBTEL
+ *
+ * INJECTION DE DÉPENDANCES :
+ * Livewire ne supporte pas l'injection dans le constructeur (sérialisation).
+ * On injecte dans les méthodes action → pratique recommandée Livewire.
+ */
 #[Layout('layouts.app')]
 class Upload extends Component
 {
@@ -23,46 +30,59 @@ class Upload extends Component
     {
         return [
             'typeValeur' => 'required|in:10,20,30,31,32,33,40,41,42,43,82,83,84',
+            'fichier'    => 'required|file|max:10240',
         ];
     }
 
     protected $messages = [
         'typeValeur.required' => 'Veuillez sélectionner le type de fichier.',
         'typeValeur.in'       => 'Type de fichier invalide.',
+        'fichier.required'    => 'Veuillez sélectionner un fichier.',
+        'fichier.max'         => 'Le fichier ne doit pas dépasser 10 MB.',
     ];
 
+    // Auto-détection du type depuis le nom du fichier
+    // Format SIBTEL : RR-CCC-TT-NN.ENV  ex: 26-999-10-21-reel.ENV
     public function updatedFichier(): void
     {
         $this->resultat = [];
         $this->erreur   = '';
 
-        if ($this->fichier) {
-            $nom     = strtoupper($this->fichier->getClientOriginalName());
-            $parties = explode('-', $nom);
-            if (isset($parties[2]) && is_numeric($parties[2])) {
-                $type = $parties[2];
-                if (in_array($type, ['10', '20', '30', '31', '32'])) {
-                    $this->typeValeur = $type;
-                }
+        if (!$this->fichier) return;
+
+        $extension = strtolower($this->fichier->getClientOriginalExtension());
+        if (!in_array($extension, ['env', 'pak', 'txt'])) {
+            $this->erreur = 'Format non supporté. Utilisez un fichier .ENV ou .PAK';
+            return;
+        }
+
+        $nom     = strtoupper($this->fichier->getClientOriginalName());
+        $parties = explode('-', $nom);
+
+        if (isset($parties[2]) && is_numeric($parties[2])) {
+            $typeDetecte  = $parties[2];
+            $typesValides = ['10','20','30','31','32','33','40','41','42','43','82','83','84'];
+            if (in_array($typeDetecte, $typesValides)) {
+                $this->typeValeur = $typeDetecte;
             }
         }
     }
 
-    public function traiter(): void
-    {
-        $audit = app(AuditService::class);
-
+    /**
+     * Injection dans la méthode — bonne pratique Livewire
+     * Laravel résout automatiquement FichierTraitementService et AuditService
+     * grâce aux liaisons dans AppServiceProvider.
+     */
+    public function traiter(
+        FichierTraitementService $service,
+        AuditService $audit
+    ): void {
         try {
             $this->validate();
 
-            if (!$this->fichier) {
-                $this->erreur = 'Veuillez sélectionner un fichier.';
-                return;
-            }
-
             $extension = strtolower($this->fichier->getClientOriginalExtension());
-            if (!in_array($extension, ['env', 'txt', 'pak', 'ENV', 'PAK'])) {
-                $this->erreur = 'Le fichier doit être de type .env, .pak ou .txt.';
+            if (!in_array($extension, ['env', 'pak', 'txt'])) {
+                $this->erreur = 'Le fichier doit être de type .ENV ou .PAK';
                 return;
             }
 
@@ -71,55 +91,43 @@ class Upload extends Component
             $this->erreur       = '';
 
             $nomOriginal = $this->fichier->getClientOriginalName();
-            $dossier     = storage_path('app/telecompensation');
 
+            $dossier = storage_path('app/telecompensation');
             if (!is_dir($dossier)) {
                 mkdir($dossier, 0755, true);
             }
 
-            $cheminRelatif = $this->fichier->storeAs(
-                'telecompensation',
-                $nomOriginal,
-                'local'
-            );
-
+            $cheminRelatif = $this->fichier->storeAs('telecompensation', $nomOriginal, 'local');
             $cheminComplet = storage_path('app/' . $cheminRelatif);
 
             if (!file_exists($cheminComplet)) {
-                throw new \RuntimeException("Fichier introuvable : {$cheminComplet}");
+                throw new \RuntimeException("Fichier introuvable après upload : {$cheminComplet}");
             }
 
-            $service        = app(FichierTraitementService::class);
+            // ↓ Injection utilisée directement — pas de app()
             $this->resultat = $service->traiter($cheminComplet, $this->typeValeur);
 
             if ($this->resultat['succes']) {
                 $audit->log(
                     'UPLOAD', 'FICHIERS',
-                    "Upload fichier : {$nomOriginal} — Type : {$this->typeValeur} — " .
+                    "Upload : {$nomOriginal} — Type : {$this->typeValeur} — " .
                     "{$this->resultat['stats']['valides']} valides, " .
-                    "{$this->resultat['stats']['rejetes']} rejetes",
+                    "{$this->resultat['stats']['rejetes']} rejetés",
                     [],
                     ['fichier_id' => $this->resultat['fichier_id'] ?? null]
                 );
                 $this->erreur  = '';
                 $this->fichier = null;
             } else {
-                $audit->log(
-                    'UPLOAD', 'FICHIERS',
-                    "Echec upload : {$nomOriginal}",
-                    [], [], 'FAILED'
-                );
+                $audit->log('UPLOAD', 'FICHIERS',
+                    "Échec upload : {$nomOriginal}", [], [], 'FAILED');
                 $this->erreur = $this->resultat['message'] ?? 'Erreur lors du traitement.';
             }
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            $this->erreur = 'Erreur de validation : ' .
-                implode(', ', array_values($e->errors())[0] ?? []);
+            $erreurs      = $e->errors();
+            $this->erreur = implode(', ', array_merge(...array_values($erreurs)));
         } catch (\Exception $e) {
-            try {
-                $audit->log('UPLOAD', 'FICHIERS',
-                    "Exception : " . $e->getMessage(), [], [], 'FAILED');
-            } catch (\Exception $e2) {}
             $this->erreur = 'Erreur : ' . $e->getMessage();
         } finally {
             $this->enTraitement = false;

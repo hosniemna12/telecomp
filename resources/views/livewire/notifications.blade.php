@@ -1,68 +1,69 @@
-﻿<div class="relative" wire:poll.15000ms="refresh">
-    <button wire:click="toggleDropdown"
-            class="relative p-2 text-slate-400 hover:text-white transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+<div>
+<style>
+.notif-panel{position:fixed;top:var(--header-h);right:16px;width:360px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 16px 48px rgba(0,0,0,0.5);z-index:500;max-height:480px;overflow:hidden;display:flex;flex-direction:column}
+.notif-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.notif-body{overflow-y:auto;flex:1}
+.notif-item{display:flex;gap:10px;padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.03);cursor:pointer;transition:background 0.15s}
+.notif-item:hover{background:rgba(255,255,255,0.03)}
+.notif-item.non-lu{background:rgba(201,168,76,0.05)}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:5px}
+.notif-dot.lu{background:transparent;border:1.5px solid var(--border)}
+</style>
+
+{{-- Bouton cloche avec badge --}}
+<div style="position:relative">
+    <button wire:click="togglePanel"
+        style="position:relative;width:36px;height:36px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-secondary);transition:all 0.15s"
+        onmouseover="this.style.borderColor='var(--gold)'"
+        onmouseout="this.style.borderColor='var(--border)'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
-        @if($nbRejets > 0)
-            <span class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full
-                         text-white text-xs flex items-center justify-center">
-                {{ $nbRejets > 9 ? '9+' : $nbRejets }}
-            </span>
-        @endif
-        @if($nbEnCours > 0)
-            <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-blue-500
-                         rounded-full animate-pulse"></span>
+        @if($count > 0)
+        <span style="position:absolute;top:5px;right:5px;width:8px;height:8px;background:var(--gold);border-radius:50%;border:1.5px solid var(--bg-surface)"></span>
         @endif
     </button>
 
-    @if($showDropdown)
-        <div class="absolute right-0 top-10 w-80 bg-slate-800 border border-slate-700
-                    rounded-xl shadow-2xl z-50">
-            <div class="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-                <h3 class="text-white font-medium text-sm">Notifications</h3>
-                @if($nbRejets > 0)
-                    <span class="bg-red-600/20 text-red-400 text-xs px-2 py-0.5 rounded-full">
-                        {{ $nbRejets }} rejet(s)
-                    </span>
-                @endif
-            </div>
-            <div class="max-h-64 overflow-y-auto">
-                @if($nbEnCours > 0)
-                    <div class="px-4 py-3 border-b border-slate-700/50 bg-blue-900/10 flex items-center gap-3">
-                        <div class="w-2 h-2 rounded-full bg-blue-400 animate-pulse flex-shrink-0"></div>
-                        <p class="text-blue-300 text-xs">{{ $nbEnCours }} fichier(s) en cours</p>
-                    </div>
-                @endif
-                @forelse($derniersRejets as $rejet)
-                    <div class="px-4 py-3 border-b border-slate-700/50 hover:bg-slate-700/30">
-                        <div class="flex items-start gap-3">
-                            <div class="w-2 h-2 rounded-full bg-red-400 flex-shrink-0 mt-1"></div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-slate-300 text-xs font-medium">{{ $rejet->code_rejet }}</p>
-                                <p class="text-slate-500 text-xs truncate mt-0.5">{{ $rejet->motif_rejet ?: 'Anomalie détectée' }}</p>
-                                <p class="text-slate-600 text-xs mt-0.5">{{ $rejet->fichier->nom_fichier ?? '' }}</p>
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                    <div class="px-4 py-8 text-center">
-                        <svg class="w-8 h-8 text-slate-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <p class="text-slate-500 text-xs">Aucun rejet en attente</p>
-                    </div>
-                @endforelse
-            </div>
-            <div class="px-4 py-3 border-t border-slate-700">
-                <a href="{{ route('rejets.index') }}" wire:click="toggleDropdown"
-                   class="text-blue-400 hover:text-blue-300 text-xs transition">
-                    Voir tous les rejets →
-                </a>
-            </div>
+    {{-- Panel notifications --}}
+    @if($showPanel)
+    <div class="notif-panel">
+        <div class="notif-head">
+            <span style="font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--text-primary)">
+                Notifications @if($count > 0)<span style="color:var(--gold)">({{ $count }})</span>@endif
+            </span>
+            @if($count > 0)
+            <button wire:click="toutMarquerLu" style="font-size:11px;color:var(--text-muted);background:none;border:none;cursor:pointer">
+                Tout marquer lu
+            </button>
+            @endif
         </div>
-        <div class="fixed inset-0 z-40" wire:click="toggleDropdown"></div>
+        <div class="notif-body">
+            @forelse($notifications as $n)
+            <div class="notif-item {{ !$n->lu ? 'non-lu' : '' }}" wire:click="marquerLu({{ $n->id }})">
+                <div class="notif-dot {{ $n->lu ? 'lu' : '' }}"></div>
+                <div style="flex:1">
+                    <div style="font-size:12.5px;font-weight:{{ !$n->lu ? '600' : '400' }};color:var(--text-primary)">
+                        {{ $n->titre }}
+                    </div>
+                    <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;line-height:1.5">
+                        {{ Str::limit($n->message, 80) }}
+                    </div>
+                    <div style="font-size:10.5px;color:var(--text-muted);margin-top:4px">
+                        {{ $n->created_at?->diffForHumans() }}
+                        @if($n->fichier)
+                        · <a href="{{ route('fichiers.show', $n->fichier_id) }}" style="color:var(--gold);text-decoration:none">Voir le fichier</a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            @empty
+            <div style="text-align:center;padding:32px 20px;color:var(--text-muted);font-size:13px">
+                Aucune notification
+            </div>
+            @endforelse
+        </div>
+    </div>
     @endif
+</div>
 </div>

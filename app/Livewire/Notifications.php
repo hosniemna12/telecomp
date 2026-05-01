@@ -3,36 +3,60 @@
 namespace App\Livewire;
 
 use Livewire\Component;
-use App\Models\TcRejet;
-use App\Models\TcFichier;
+use App\Models\TcNotification;
+use Illuminate\Support\Facades\Auth;
 
 class Notifications extends Component
 {
-    public int  $nbRejets     = 0;
-    public int  $nbEnCours    = 0;
-    public bool $showDropdown = false;
+    public bool $showPanel = false;
+    public int  $count     = 0;
 
-    public function refresh(): void
+    public function mount(): void
     {
-        $this->nbRejets  = TcRejet::where('traite', false)->count();
-        $this->nbEnCours = TcFichier::where('statut', 'EN_COURS')->count();
+        $this->refreshCount();
     }
 
-    public function toggleDropdown(): void
+    public function togglePanel(): void
     {
-        $this->showDropdown = !$this->showDropdown;
+        $this->showPanel = !$this->showPanel;
+        if ($this->showPanel) {
+            $this->refreshCount();
+        }
+    }
+
+    public function marquerLu(int $id): void
+    {
+        TcNotification::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->update(['lu' => 1]);
+
+        $this->refreshCount();
+    }
+
+    public function toutMarquerLu(): void
+    {
+        TcNotification::where('user_id', Auth::id())
+            ->where('lu', 0)
+            ->update(['lu' => 1]);
+
+        $this->refreshCount();
+    }
+
+    private function refreshCount(): void
+    {
+        $this->count = TcNotification::where('user_id', Auth::id())
+            ->where('lu', 0)
+            ->count();
     }
 
     public function render()
     {
-        $this->refresh();
-
-        $derniersRejets = TcRejet::with('fichier')
-            ->where('traite', false)
-            ->latest()
-            ->take(5)
+        $notifications = TcNotification::with('fichier')
+            ->where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->take(20)
             ->get();
 
-        return view('livewire.notifications', compact('derniersRejets'));
+        return view('livewire.notifications', compact('notifications'));
     }
 }

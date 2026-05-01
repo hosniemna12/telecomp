@@ -19,8 +19,8 @@ class XmlViewer extends Component
     {
         $this->fichierId = $id;
 
-        $fichier = TcFichier::with('xmlProduits')->findOrFail($id);
-        $xml     = $fichier->xmlProduits->first();
+        $fichier = TcFichier::with('xmlProduit')->findOrFail($id);
+        $xml     = $fichier->xmlProduit->first();
 
         if ($xml) {
             $this->typeMessage = $xml->type_message;
@@ -30,8 +30,8 @@ class XmlViewer extends Component
 
     public function telecharger(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $fichier = TcFichier::with('xmlProduits')->findOrFail($this->fichierId);
-        $xml     = $fichier->xmlProduits->first();
+        $fichier = TcFichier::with('xmlProduit')->findOrFail($this->fichierId);
+        $xml     = $fichier->xmlProduit->first();
 
         return response()->streamDownload(function () use ($xml) {
             echo $xml->contenu_xml;

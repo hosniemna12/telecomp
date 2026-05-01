@@ -6,15 +6,16 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use App\Services\AuditService;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 #[Layout('layouts.app')]
 class Index extends Component
 {
     use WithPagination;
 
-    public string $recherche  = '';
+    public string $search     = '';
     public bool   $showModal  = false;
     public bool   $editMode   = false;
     public int    $editId     = 0;
@@ -22,32 +23,28 @@ class Index extends Component
     public string $email      = '';
     public string $password   = '';
     public string $role       = 'operateur';
-    public string $erreurForm = '';
-    public string $successMsg = '';
 
     protected function rules(): array
     {
-        $emailRule = $this->editMode
+        $emailRule    = $this->editMode
             ? 'required|email|unique:users,email,' . $this->editId
             : 'required|email|unique:users,email';
 
-        $passwordRule = $this->editMode
-            ? 'nullable|min:6'
-            : 'required|min:6';
+        $passwordRule = $this->editMode ? 'nullable|min:6' : 'required|min:6';
 
         return [
             'name'     => 'required|min:3',
             'email'    => $emailRule,
             'password' => $passwordRule,
-            'role'     => 'required|in:admin,operateur,superviseur',
+            'role'     => 'required|in:admin,operateur,superviseur,lecteur',
         ];
     }
 
     protected $messages = [
         'name.required'     => 'Le nom est obligatoire.',
         'name.min'          => 'Le nom doit contenir au moins 3 caractères.',
-        'email.required'    => 'L\'email est obligatoire.',
-        'email.email'       => 'L\'email n\'est pas valide.',
+        'email.required'    => "L'email est obligatoire.",
+        'email.email'       => "L'email n'est pas valide.",
         'email.unique'      => 'Cet email est déjà utilisé.',
         'password.required' => 'Le mot de passe est obligatoire.',
         'password.min'      => 'Le mot de passe doit contenir au moins 6 caractères.',
@@ -55,27 +52,22 @@ class Index extends Component
         'role.in'           => 'Le rôle sélectionné est invalide.',
     ];
 
-    public function updatingRecherche(): void
-    {
-        $this->resetPage();
-    }
+    public function updatingSearch(): void { $this->resetPage(); }
 
-    public function ouvrirModal(): void
+    // Alias pour la vue (wire:click="modifier()")
+    public function modifier(int $id): void
     {
-        $this->resetForm();
-        $this->showModal = true;
-        $this->editMode  = false;
+        $this->editer($id);
     }
 
     public function editer(int $id): void
     {
-        $user = User::findOrFail($id);
-
-        if ($id === (int)auth()->user()->id) {
-            $this->erreurForm = 'Vous ne pouvez pas modifier votre propre compte ici.';
+        if ($id === (int)Auth::id()) {
+            session()->flash('error', 'Vous ne pouvez pas modifier votre propre compte ici.');
             return;
         }
 
+        $user            = User::findOrFail($id);
         $this->editId    = $id;
         $this->name      = $user->name;
         $this->email     = $user->email;
@@ -85,35 +77,28 @@ class Index extends Component
         $this->showModal = true;
     }
 
-    public function sauvegarder(): void
+    public function sauvegarder(AuditService $audit): void
     {
-        $this->erreurForm = '';
         $this->validate();
-
-        $audit = app(AuditService::class);
 
         try {
             if ($this->editMode) {
-                $user     = User::findOrFail($this->editId);
-                $avant    = ['name' => $user->name, 'email' => $user->email, 'role' => $user->role];
-                $data     = [
-                    'name'  => $this->name,
-                    'email' => $this->email,
-                    'role'  => $this->role,
-                ];
+                $user  = User::findOrFail($this->editId);
+                $avant = ['name' => $user->name, 'email' => $user->email, 'role' => $user->role];
+
+                $data = ['name' => $this->name, 'email' => $this->email, 'role' => $this->role];
                 if (!empty($this->password)) {
                     $data['password'] = Hash::make($this->password);
                 }
                 $user->update($data);
 
-                $audit->log(
-                    'USER_UPDATE', 'USERS',
-                    "Modification utilisateur : {$this->email} — Role : {$this->role}",
+                $audit->log('USER_UPDATE', 'USERS',
+                    "Modification utilisateur : {$this->email} — Rôle : {$this->role}",
                     $avant,
                     ['name' => $this->name, 'email' => $this->email, 'role' => $this->role]
                 );
 
-                $this->successMsg = "Utilisateur mis à jour avec succès.";
+                session()->flash('success', "Utilisateur mis à jour avec succès.");
 
             } else {
                 User::create([
@@ -123,42 +108,41 @@ class Index extends Component
                     'role'     => $this->role,
                 ]);
 
-                $audit->log(
-                    'USER_CREATE', 'USERS',
-                    "Creation utilisateur : {$this->email} — Role : {$this->role}",
+                $audit->log('USER_CREATE', 'USERS',
+                    "Création utilisateur : {$this->email} — Rôle : {$this->role}",
                     [],
                     ['name' => $this->name, 'email' => $this->email, 'role' => $this->role]
                 );
 
-                $this->successMsg = "Utilisateur créé avec succès.";
+                session()->flash('success', "Utilisateur créé avec succès.");
             }
 
             $this->showModal = false;
             $this->resetForm();
 
         } catch (\Exception $e) {
-            $this->erreurForm = "Erreur : " . $e->getMessage();
+            session()->flash('error', "Erreur : " . $e->getMessage());
         }
     }
 
-    public function supprimer(int $id): void
+    public function supprimer(int $id, AuditService $audit): void
     {
-        if ($id === (int)auth()->id()) {
-            $this->erreurForm = 'Vous ne pouvez pas supprimer votre propre compte.';
+        if ($id === (int)Auth::id()) {
+            session()->flash('error', 'Vous ne pouvez pas supprimer votre propre compte.');
             return;
         }
 
-        $user = User::findOrFail($id);
+        $user  = User::findOrFail($id);
         $email = $user->email;
         $user->delete();
 
-        app(AuditService::class)->log(
-            'USER_DELETE', 'USERS',
+        $audit->log('USER_DELETE', 'USERS',
             "Suppression utilisateur : {$email}",
-            ['email' => $email], []
+            ['email' => $email],
+            []
         );
 
-        $this->successMsg = "Utilisateur supprimé.";
+        session()->flash('success', "Utilisateur supprimé.");
     }
 
     public function fermerModal(): void
@@ -169,22 +153,21 @@ class Index extends Component
 
     private function resetForm(): void
     {
-        $this->name       = '';
-        $this->email      = '';
-        $this->password   = '';
-        $this->role       = 'operateur';
-        $this->editId     = 0;
-        $this->editMode   = false;
-        $this->erreurForm = '';
+        $this->name      = '';
+        $this->email     = '';
+        $this->password  = '';
+        $this->role      = 'operateur';
+        $this->editId    = 0;
+        $this->editMode  = false;
         $this->resetValidation();
     }
 
     public function render()
     {
         $users = User::query()
-            ->when($this->recherche, fn($q) =>
-                $q->where('name', 'like', '%' . $this->recherche . '%')
-                  ->orWhere('email', 'like', '%' . $this->recherche . '%')
+            ->when($this->search, fn($q) =>
+                $q->where('name', 'like', '%' . $this->search . '%')
+                  ->orWhere('email', 'like', '%' . $this->search . '%')
             )
             ->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -194,6 +177,7 @@ class Index extends Component
             'admins'       => User::where('role', 'admin')->count(),
             'operateurs'   => User::where('role', 'operateur')->count(),
             'superviseurs' => User::where('role', 'superviseur')->count(),
+            'lecteurs'     => User::where('role', 'lecteur')->count(),
         ];
 
         return view('livewire.users.index', compact('users', 'stats'));

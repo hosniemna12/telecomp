@@ -1,187 +1,90 @@
-﻿<div>
-
-    <div class="flex items-center justify-between mb-8">
+<div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px">
         <div>
-            <h1 class="text-2xl font-bold text-white">Audit Trail</h1>
-            <p class="text-slate-400 text-sm mt-1">
-                Journal complet des actions — Conformite bancaire BCT
-            </p>
-        </div>
-        <div class="flex items-center gap-2 bg-slate-800 border border-slate-700
-                    rounded-lg px-3 py-1.5">
-            <div class="w-2 h-2 rounded-full bg-green-400"></div>
-            <span class="text-slate-400 text-xs">Traçabilite activee</span>
+            <h1 style="font-family:var(--font-display);font-size:26px;font-weight:700;color:var(--text-primary)">Journal d'audit</h1>
+            <p style="font-size:13px;color:var(--text-muted);margin-top:4px">Traçabilité complète des actions système</p>
         </div>
     </div>
 
-    {{-- KPIs --}}
-    <div class="grid grid-cols-4 gap-4 mb-6">
-        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold text-white">{{ $stats['total'] }}</div>
-            <div class="text-slate-400 text-xs mt-1">Total actions</div>
+    <div class="grid-4" style="margin-bottom:24px">
+        <div class="stat-card gold">
+            <div class="stat-label">Total événements</div>
+            <div class="stat-value gold">{{ $stats['total'] ?? 0 }}</div>
         </div>
-        <div class="bg-slate-800 border border-green-700/30 rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold text-green-400">{{ $stats['success'] }}</div>
-            <div class="text-slate-400 text-xs mt-1">Succes</div>
+        <div class="stat-card green">
+            <div class="stat-label">Succès</div>
+            <div class="stat-value green">{{ $stats['success'] ?? 0 }}</div>
         </div>
-        <div class="bg-slate-800 border border-red-700/30 rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold text-red-400">{{ $stats['failed'] }}</div>
-            <div class="text-slate-400 text-xs mt-1">Echecs</div>
+        <div class="stat-card red">
+            <div class="stat-label">Échecs</div>
+            <div class="stat-value red">{{ $stats['failed'] ?? 0 }}</div>
         </div>
-        <div class="bg-slate-800 border border-blue-700/30 rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold text-blue-400">{{ $stats['today'] }}</div>
-            <div class="text-slate-400 text-xs mt-1">Aujourd'hui</div>
+        <div class="stat-card blue">
+            <div class="stat-label">Aujourd'hui</div>
+            <div class="stat-value blue">{{ $stats['today'] ?? 0 }}</div>
         </div>
     </div>
 
-    {{-- Filtres --}}
-    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-6">
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <input wire:model.live.debounce.300ms="recherche" type="text"
-                placeholder="Email ou description..."
-                class="col-span-2 bg-slate-700 border border-slate-600 text-white
-                       placeholder-slate-400 rounded-lg px-4 py-2 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-
-            <select wire:model.live="action"
-                class="bg-slate-700 border border-slate-600 text-white rounded-lg
-                       px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Toutes actions</option>
-                <option value="LOGIN">Connexion</option>
-                <option value="LOGOUT">Deconnexion</option>
-                <option value="UPLOAD">Upload</option>
-                <option value="TRAITEMENT">Traitement</option>
-                <option value="REJET_TRAITE">Rejet traite</option>
-                <option value="USER_CREATE">Creation user</option>
-                <option value="USER_UPDATE">Modif. user</option>
-                <option value="USER_DELETE">Suppression user</option>
-                <option value="PASSWORD_CHANGE">Mdp change</option>
-            </select>
-
-            <select wire:model.live="module"
-                class="bg-slate-700 border border-slate-600 text-white rounded-lg
-                       px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Tous modules</option>
-                <option value="AUTH">Authentification</option>
-                <option value="FICHIERS">Fichiers</option>
-                <option value="REJETS">Rejets</option>
-                <option value="USERS">Utilisateurs</option>
-                <option value="PROFILE">Profil</option>
-            </select>
-
-            <select wire:model.live="statut"
-                class="bg-slate-700 border border-slate-600 text-white rounded-lg
-                       px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Tous statuts</option>
-                <option value="SUCCESS">Succes</option>
-                <option value="FAILED">Echec</option>
-            </select>
-        </div>
-
-        @if($recherche || $action || $module || $statut)
-            <div class="mt-3 flex justify-end">
-                <button wire:click="reinitialiser"
-                    class="text-slate-400 hover:text-white text-xs transition
-                           px-3 py-1.5 border border-slate-600 rounded-lg">
-                    Reinitialiser filtres
-                </button>
+    <div class="table-wrap">
+        <div class="table-head">
+            <span class="table-title">Événements système</span>
+            <div style="display:flex;gap:10px">
+                <div class="input-wrap" style="width:220px">
+                    <svg class="input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input wire:model.live="recherche" type="text" class="input" placeholder="Rechercher...">
+                </div>
+                <select wire:model.live="action" class="input" style="width:130px">
+                    <option value="">Toutes actions</option>
+                    <option value="LOGIN">Connexion</option>
+                    <option value="UPLOAD">Upload</option>
+                    <option value="TRAITEMENT">Traitement</option>
+                    <option value="EXPORT">Export</option>
+                </select>
+                <select wire:model.live="statut" class="input" style="width:120px">
+                    <option value="">Tous statuts</option>
+                    <option value="SUCCESS">Succès</option>
+                    <option value="FAILED">Échec</option>
+                </select>
+                <button wire:click="reinitialiser" class="btn btn-secondary btn-sm">Réinitialiser</button>
             </div>
-        @endif
-    </div>
-
-    {{-- Tableau --}}
-    <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
-
-        <div class="px-6 py-3 border-b border-slate-700">
-            <span class="text-slate-400 text-xs">{{ $logs->total() }} entree(s)</span>
         </div>
-
-        <table class="w-full">
-            <thead class="bg-slate-700/50">
-                <tr class="text-slate-400 text-xs uppercase tracking-wider">
-                    <th class="text-left px-4 py-3">Date/Heure</th>
-                    <th class="text-left px-4 py-3">Utilisateur</th>
-                    <th class="text-left px-4 py-3">Action</th>
-                    <th class="text-left px-4 py-3">Module</th>
-                    <th class="text-left px-4 py-3">Description</th>
-                    <th class="text-left px-4 py-3">IP</th>
-                    <th class="text-left px-4 py-3">Statut</th>
-                </tr>
+        <table>
+            <thead>
+                <tr><th>Utilisateur</th><th>Action</th><th>Description</th><th>Module</th><th>Statut</th><th>IP</th><th>Date</th></tr>
             </thead>
-            <tbody class="divide-y divide-slate-700">
-                @forelse($logs as $log)
-                    <tr class="hover:bg-slate-700/20 transition">
-
-                        <td class="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">
-                            {{ \Carbon\Carbon::parse($log->created_at)->format('d/m/Y H:i:s') }}
-                        </td>
-
-                        <td class="px-4 py-3">
-                            <p class="text-slate-300 text-xs">{{ $log->user_email ?? 'Systeme' }}</p>
-                        </td>
-
-                        <td class="px-4 py-3">
-                            @php
-                                $actionColors = [
-                                    'LOGIN'           => 'bg-green-600/20 text-green-400',
-                                    'LOGOUT'          => 'bg-slate-600/20 text-slate-400',
-                                    'UPLOAD'          => 'bg-blue-600/20 text-blue-400',
-                                    'TRAITEMENT'      => 'bg-purple-600/20 text-purple-400',
-                                    'REJET_TRAITE'    => 'bg-amber-600/20 text-amber-400',
-                                    'USER_CREATE'     => 'bg-teal-600/20 text-teal-400',
-                                    'USER_UPDATE'     => 'bg-orange-600/20 text-orange-400',
-                                    'USER_DELETE'     => 'bg-red-600/20 text-red-400',
-                                    'PASSWORD_CHANGE' => 'bg-pink-600/20 text-pink-400',
-                                    'ACCESS_DENIED'   => 'bg-red-600/20 text-red-400',
-                                ];
-                                $ac = $actionColors[$log->action] ?? 'bg-slate-600/20 text-slate-400';
-                            @endphp
-                            <span class="text-xs px-2 py-0.5 rounded {{ $ac }}">
-                                {{ $log->action }}
-                            </span>
-                        </td>
-
-                        <td class="px-4 py-3">
-                            <span class="text-slate-400 text-xs">{{ $log->module ?? '—' }}</span>
-                        </td>
-
-                        <td class="px-4 py-3">
-                            <p class="text-slate-300 text-xs max-w-xs truncate">
-                                {{ $log->description ?? '—' }}
-                            </p>
-                        </td>
-
-                        <td class="px-4 py-3">
-                            <span class="text-slate-500 text-xs font-mono">
-                                {{ $log->ip_address ?? '—' }}
-                            </span>
-                        </td>
-
-                        <td class="px-4 py-3">
-                            <span class="text-xs px-2 py-0.5 rounded
-                                {{ $log->statut_action === 'SUCCESS' ? 'bg-green-600/20 text-green-400' : 'bg-red-600/20 text-red-400' }}">
-                                {{ $log->statut_action }}
-                            </span>
-                        </td>
-
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="px-6 py-12 text-center">
-                            <p class="text-slate-500 text-sm">Aucune action enregistree</p>
-                        </td>
-                    </tr>
-                @endforelse
+            <tbody>
+            @forelse($logs as $log)
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                        <div style="width:28px;height:28px;border-radius:50%;background:var(--gold-dim);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold-light)">
+                            {{ strtoupper(substr($log->user_email ?? 'S', 0, 1)) }}
+                        </div>
+                        <span style="font-size:12px;color:var(--text-secondary)">{{ $log->user_email ?? 'Système' }}</span>
+                    </div>
+                </td>
+                <td><span class="badge badge-blue">{{ $log->action ?? '—' }}</span></td>
+                <td style="font-size:12px;color:var(--text-secondary);max-width:300px">{{ Str::limit($log->description ?? '—', 60) }}</td>
+                <td style="font-size:12px;color:var(--text-muted)">{{ $log->module ?? '—' }}</td>
+                <td>
+                    @if(($log->statut ?? '') === 'SUCCESS')
+                        <span class="badge badge-success">Succès</span>
+                    @elseif(($log->statut ?? '') === 'FAILED')
+                        <span class="badge badge-danger">Échec</span>
+                    @else
+                        <span class="badge badge-muted">{{ $log->statut ?? '—' }}</span>
+                    @endif
+                </td>
+                <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">{{ $log->ip_address ?? '—' }}</td>
+                <td style="font-size:11px;color:var(--text-muted)">{{ $log->created_at?->format('d/m/Y H:i') }}</td>
+            </tr>
+            @empty
+            <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">Aucun événement trouvé</td></tr>
+            @endforelse
             </tbody>
         </table>
-
         @if($logs->hasPages())
-            <div class="px-6 py-4 border-t border-slate-700">
-                {{ $logs->links() }}
-            </div>
+        <div style="padding:14px 20px;border-top:1px solid var(--border)">{{ $logs->links() }}</div>
         @endif
-
     </div>
-
 </div>
-

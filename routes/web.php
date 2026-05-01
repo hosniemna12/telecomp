@@ -16,12 +16,8 @@ use App\Livewire\Outils\VerificateurRib;
 use App\Livewire\Profile\Show as ProfileShow;
 use App\Livewire\Audit\Index as AuditIndex;
 
-Route::get('/', function () {
-    return redirect()->route('login');
-});
-
+Route::get('/', fn() => redirect()->route('login'));
 Route::get('/login', Login::class)->name('login');
-
 Route::post('/logout', function () {
     Auth::logout();
     session()->invalidate();
@@ -31,15 +27,17 @@ Route::post('/logout', function () {
 
 Route::middleware('auth')->group(function () {
 
+    // Dashboard — tous les roles
     Route::get('/dashboard', App\Livewire\Dashboard::class)
         ->name('dashboard');
 
     // ── Fichiers ──────────────────────────────────────────────────
-
+    // Upload : admin, operateur, superviseur (lecteur = lecture seule)
     Route::get('/fichiers/upload', Upload::class)
-        ->middleware('role:admin,operateur')
+        ->middleware('role:admin,operateur,superviseur')
         ->name('fichiers.upload');
 
+    // Liste & detail : tous les roles
     Route::get('/fichiers', Index::class)
         ->name('fichiers.index');
 
@@ -50,13 +48,13 @@ Route::middleware('auth')->group(function () {
         ->name('fichiers.xml');
 
     // ── Rejets & Pacs.004 ─────────────────────────────────────────
-    // ⚠️ IMPORTANT : pacs004 AVANT rejets index pour éviter conflit
-
+    // pacs004 AVANT rejets index pour eviter conflit
     Route::get('/rejets/pacs004', Pacs004Generator::class)
-        ->middleware('role:admin,operateur')
+        ->middleware('role:admin,operateur,superviseur')
         ->name('rejets.pacs004');
 
     Route::get('/rejets', RejetsIndex::class)
+        ->middleware('role:admin,operateur,superviseur')
         ->name('rejets.index');
 
     Route::get('/pacs004/{id}/telecharger', function ($id) {
@@ -68,31 +66,35 @@ Route::middleware('auth')->group(function () {
         );
     })->name('pacs004.telecharger');
 
-    // ── Stats ─────────────────────────────────────────────────────
-
+    // ── Stats : admin, superviseur, lecteur (pas operateur)
     Route::get('/stats', StatsIndex::class)
+        ->middleware('role:admin,superviseur,lecteur')
         ->name('stats.index');
 
-    // ── Utilisateurs ──────────────────────────────────────────────
-
+    // ── Utilisateurs : admin uniquement
     Route::get('/users', UsersIndex::class)
         ->middleware('role:admin')
         ->name('users.index');
 
-    // ── Profil ────────────────────────────────────────────────────
-
+    // ── Profil : tous
     Route::get('/profile', ProfileIndex::class)
         ->name('profile.index');
 
-    // ── Outils ───────────────────────────────────────────────────
-
+    // ── Outils : tous
     Route::get('/outils/rib', VerificateurRib::class)
         ->name('outils.rib');
 
-    // ── Audit ─────────────────────────────────────────────────────
-
+    // ── Audit : admin uniquement
     Route::get('/audit', AuditIndex::class)
         ->middleware('role:admin')
         ->name('audit.index');
 
+    // Rapports Export
+    Route::get('/rapport', [App\Http\Controllers\RapportController::class, 'index'])
+        ->middleware('role:admin,superviseur')
+        ->name('rapport.index');
+
+    Route::get('/rapport/generer', [App\Http\Controllers\RapportController::class, 'generer'])
+        ->middleware('role:admin,superviseur')
+        ->name('rapport.generer');
 });

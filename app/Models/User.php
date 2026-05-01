@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class User extends Authenticatable
 {
-    use Notifiable;
+    use Notifiable, HasFactory;
 
     protected $fillable = [
         'name',
@@ -26,7 +27,6 @@ class User extends Authenticatable
         'password'          => 'hashed',
     ];
 
-    // Helpers de rôle
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

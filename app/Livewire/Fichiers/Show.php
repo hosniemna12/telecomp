@@ -3,62 +3,98 @@
 namespace App\Livewire\Fichiers;
 
 use Livewire\Component;
-use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use App\Models\TcFichier;
-use App\Models\TcEnrDetail;
+use App\Models\TcCommentaire;
+use App\Services\ValidationService;
+use App\Services\XmlTransformerService;
+use App\Services\AuditService;
+use Illuminate\Support\Facades\Auth;
 
 #[Layout('layouts.app')]
 class Show extends Component
 {
-    use WithPagination;
-
-    public int    $fichierId;
-    public string $statutFiltre = '';
-    public string $recherche    = '';
+    public int    $id;
+    public string $nouveauCommentaire   = '';
+    public string $commentaireValidation = '';
+    public string $motifRejet           = '';
+    public bool   $showModalValidation  = false;
+    public bool   $showModalRejet       = false;
 
     public function mount(int $id): void
     {
-        $this->fichierId = $id;
+        $this->id = $id;
     }
 
-    public function updatingStatutFiltre(): void
+    public function ouvrirModalValidation(): void
     {
-        $this->resetPage();
+        $this->showModalValidation = true;
     }
 
-    public function updatingRecherche(): void
+    public function ouvrirModalRejet(): void
     {
-        $this->resetPage();
+        $this->showModalRejet = true;
+    }
+
+    public function confirmerValidation(ValidationService $service): void
+    {
+        $fichier = TcFichier::findOrFail($this->id);
+        $service->valider($fichier, $this->commentaireValidation);
+
+        // Générer XML automatiquement après validation
+        $this->dispatch('xml-genere');
+
+        $this->showModalValidation  = false;
+        $this->commentaireValidation = '';
+        session()->flash('success', 'Fichier validé — XML en cours de génération.');
+    }
+
+    public function confirmerRejet(ValidationService $service): void
+    {
+        if (empty(trim($this->motifRejet))) {
+            session()->flash('error', 'Le motif de rejet est obligatoire.');
+            return;
+        }
+
+        $fichier = TcFichier::findOrFail($this->id);
+        $service->rejeter($fichier, $this->motifRejet);
+
+        $this->showModalRejet = false;
+        $this->motifRejet     = '';
+        session()->flash('success', 'Fichier rejeté — l\'opérateur a été notifié.');
+    }
+
+    public function ajouterCommentaire(ValidationService $service): void
+    {
+        if (empty(trim($this->nouveauCommentaire))) return;
+
+        $fichier = TcFichier::findOrFail($this->id);
+        $service->commenter($fichier, $this->nouveauCommentaire);
+
+        $this->nouveauCommentaire = '';
+    }
+
+    public function resoumettre(ValidationService $service): void
+    {
+        $fichier = TcFichier::findOrFail($this->id);
+        $service->soumettreValidation($fichier);
+        session()->flash('success', 'Fichier resoumis pour validation.');
     }
 
     public function render()
     {
-        $fichier = TcFichier::with(['enrGlobaux', 'xmlProduits', 'logs'])
-            ->withCount([
-                'enrDetails as total_transactions',
-                'enrDetails as transactions_valides' => fn($q) =>
-                    $q->where('statut', 'VALIDE'),
-                'enrDetails as transactions_rejetees' => fn($q) =>
-                    $q->where('statut', 'REJETE'),
-            ])
-            ->findOrFail($this->fichierId);
+        $fichier = TcFichier::with([
+            'enregistrementsDetails',
+            'xmlProduit',
+            'uploader',
+            'valideur',
+        ])->findOrFail($this->id);
 
-        $transactions = TcEnrDetail::where('fichier_id', $this->fichierId)
-            ->when($this->statutFiltre, fn($q) =>
-                $q->where('statut', $this->statutFiltre)
-            )
-            ->when($this->recherche, fn($q) =>
-                $q->where(function($q) {
-                    $q->where('nom_donneur', 'like', '%' . $this->recherche . '%')
-                      ->orWhere('nom_beneficiaire', 'like', '%' . $this->recherche . '%')
-                      ->orWhere('rib_donneur', 'like', '%' . $this->recherche . '%')
-                      ->orWhere('rib_beneficiaire', 'like', '%' . $this->recherche . '%');
-                })
-            )
-            ->orderBy('numero_virement')
-            ->paginate(15);
+        $commentaires = TcCommentaire::with('user')
+            ->where('fichier_id', $this->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        return view('livewire.fichiers.show', compact('fichier', 'transactions'));
+        return view('livewire.fichiers.show', compact('fichier', 'commentaires'));
     }
 }

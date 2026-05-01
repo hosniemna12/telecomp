@@ -1,111 +1,186 @@
-<div class="w-full max-w-md px-4">
+<div>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-    {{-- Logo + Titre --}}
-    <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4 shadow-lg">
-            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-            </svg>
-        </div>
-        <h1 class="text-2xl font-bold text-white">Télécompensation</h1>
-        <p class="text-slate-400 text-sm mt-1">Système National — SIBTEL</p>
-    </div>
+:root {
+    --gold: #c9a84c;
+    --gold-l: #e8c97a;
+    --bg-dark: #0a0d14;
+    --bg-dark-card: #141928;
+    --bg-dark-input: #0f1420;
+    --border-dark: rgba(255,255,255,0.08);
+    --text-dark-1: #f0f4ff;
+    --text-dark-2: #8892a4;
+    --text-dark-3: #4a5568;
+    --bg-light: #f4f6fb;
+    --bg-light-card: #ffffff;
+    --bg-light-input: #f8fafc;
+    --border-light: rgba(0,0,0,0.1);
+    --text-light-1: #1a1f2e;
+    --text-light-2: #4a5568;
+    --text-light-3: #94a3b8;
+}
 
-    {{-- Carte Login --}}
-    <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-2xl">
+.login-root {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    transition: background 0.3s;
+    font-family: "DM Sans", "Segoe UI", sans-serif;
+}
+.dark-mode  { background: var(--bg-dark); }
+.light-mode { background: var(--bg-light); }
 
-        <h2 class="text-lg font-semibold text-white mb-6">Connexion</h2>
+.login-box {
+    width: 100%;
+    max-width: 400px;
+    border-radius: 16px;
+    padding: 36px 32px;
+    border: 1px solid;
+    transition: background 0.3s, border-color 0.3s;
+}
+.dark-mode  .login-box { background: var(--bg-dark-card); border-color: var(--border-dark); }
+.light-mode .login-box { background: var(--bg-light-card); border-color: var(--border-light); box-shadow: 0 8px 40px rgba(0,0,0,0.08); }
 
-        {{-- Erreur globale --}}
-        @if($erreur)
-            <div class="bg-red-500/20 border border-red-500/40 text-red-300 rounded-lg px-4 py-3 mb-5 text-sm flex items-center gap-2">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                {{ $erreur }}
+.logo-wrap { text-align: center; margin-bottom: 28px; }
+.logo-icon {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-l));
+    border-radius: 14px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 18px; color: #0a0d14;
+    margin-bottom: 14px;
+    font-family: "Syne", sans-serif;
+}
+.logo-title {
+    font-family: "Syne", sans-serif;
+    font-size: 22px; font-weight: 700;
+    transition: color 0.3s;
+}
+.dark-mode  .logo-title { color: var(--text-dark-1); }
+.light-mode .logo-title { color: var(--text-light-1); }
+.logo-sub { font-size: 12px; margin-top: 4px; transition: color 0.3s; }
+.dark-mode  .logo-sub { color: var(--text-dark-3); }
+.light-mode .logo-sub { color: var(--text-light-3); }
+
+.form-label { display: block; font-size: 12px; font-weight: 500; margin-bottom: 6px; letter-spacing: 0.3px; transition: color 0.3s; }
+.dark-mode  .form-label { color: var(--text-dark-2); }
+.light-mode .form-label { color: var(--text-light-2); }
+
+.form-input {
+    width: 100%; padding: 10px 14px;
+    font-size: 14px; border-radius: 8px;
+    border: 1.5px solid; outline: none;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.dark-mode  .form-input { background: var(--bg-dark-input); border-color: var(--border-dark); color: var(--text-dark-1); }
+.light-mode .form-input { background: var(--bg-light-input); border-color: var(--border-light); color: var(--text-light-1); }
+.form-input:focus { border-color: var(--gold) !important; }
+
+.form-group { margin-bottom: 16px; }
+
+.remember { display: flex; align-items: center; gap: 8px; margin-bottom: 22px; font-size: 13px; transition: color 0.3s; }
+.dark-mode  .remember { color: var(--text-dark-2); }
+.light-mode .remember { color: var(--text-light-2); }
+.remember input { accent-color: var(--gold); width: 15px; height: 15px; }
+
+.btn-login {
+    width: 100%; padding: 12px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-l));
+    color: #0a0d14; font-weight: 700; font-size: 14px;
+    border: none; border-radius: 8px; cursor: pointer;
+    font-family: "Syne", sans-serif;
+    letter-spacing: 0.3px; transition: opacity 0.15s, transform 0.15s;
+}
+.btn-login:hover { opacity: 0.9; transform: translateY(-1px); }
+
+.toggle-btn {
+    position: fixed; top: 18px; right: 18px;
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 1.5px solid; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; transition: all 0.2s; z-index: 999;
+    background: transparent;
+}
+.dark-mode  .toggle-btn { border-color: rgba(255,255,255,0.15); color: var(--text-dark-1); }
+.light-mode .toggle-btn { border-color: rgba(0,0,0,0.12); color: var(--text-light-1); }
+.toggle-btn:hover { border-color: var(--gold); }
+
+.footer { text-align: center; margin-top: 20px; font-size: 11px; transition: color 0.3s; }
+.dark-mode  .footer { color: var(--text-dark-3); }
+.light-mode .footer { color: var(--text-light-3); }
+
+.error-box {
+    border-radius: 8px; padding: 10px 14px;
+    margin-bottom: 18px; font-size: 13px;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.25);
+    color: #ef4444;
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+
+<div class="login-root dark-mode" id="login-root">
+
+    <!-- Toggle Dark/Light -->
+    <button class="toggle-btn" onclick="toggleMode()" id="toggle-btn" title="Changer le thème">
+        <span id="toggle-icon">☀️</span>
+    </button>
+
+    <div>
+        <div class="login-box">
+            <div class="logo-wrap">
+                <div class="logo-icon">BTL</div>
+                <div class="logo-title">Télécompensation</div>
+                <div class="logo-sub">Système National SIBTEL — Banque Tuniso-Libyenne</div>
             </div>
-        @endif
 
-        <form wire:submit="connecter" class="space-y-5">
+            @if($errors->any())
+            <div class="error-box">{{ $errors->first() }}</div>
+            @endif
 
-            {{-- Email --}}
-            <div>
-                <label class="block text-sm font-medium text-slate-300 mb-1.5">
-                    Adresse email
-                </label>
-                <input
-                    wire:model="email"
-                    type="email"
-                    placeholder="admin@sibtel.tn"
-                    class="w-full bg-white/10 border border-white/20 text-white placeholder-slate-500
-                           rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2
-                           focus:ring-blue-500 focus:border-transparent transition"
-                    autocomplete="email"
-                />
-                @error('email')
-                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
-                @enderror
+            <div class="form-group">
+                <label class="form-label">Adresse email</label>
+                <input wire:model="email" type="email" class="form-input" placeholder="votre@btl.com.tn" autocomplete="email">
             </div>
 
-            {{-- Mot de passe --}}
-            <div>
-                <label class="block text-sm font-medium text-slate-300 mb-1.5">
-                    Mot de passe
-                </label>
-                <input
-                    wire:model="password"
-                    type="password"
-                    placeholder="••••••••"
-                    class="w-full bg-white/10 border border-white/20 text-white placeholder-slate-500
-                           rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2
-                           focus:ring-blue-500 focus:border-transparent transition"
-                    autocomplete="current-password"
-                />
-                @error('password')
-                    <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
-                @enderror
+            <div class="form-group">
+                <label class="form-label">Mot de passe</label>
+                <input wire:model="password" type="password" class="form-input" placeholder="••••••••" autocomplete="current-password">
             </div>
 
-            {{-- Se souvenir --}}
-            <div class="flex items-center gap-2">
-                <input
-                    wire:model="remember"
-                    type="checkbox"
-                    id="remember"
-                    class="w-4 h-4 rounded border-white/20 bg-white/10 text-blue-500
-                           focus:ring-blue-500 focus:ring-offset-0"
-                />
-                <label for="remember" class="text-sm text-slate-400 cursor-pointer">
-                    Se souvenir de moi
-                </label>
+            <div class="remember">
+                <input wire:model="remember" type="checkbox" id="rem">
+                <label for="rem" style="cursor:pointer">Se souvenir de moi</label>
             </div>
 
-            {{-- Bouton --}}
-            <button
-                type="submit"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4
-                       rounded-lg text-sm transition duration-200 flex items-center justify-center gap-2"
-            >
-                <span wire:loading.remove wire:target="connecter">Se connecter</span>
-                <span wire:loading wire:target="connecter" class="flex items-center gap-2">
-                    <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10"
-                            stroke="currentColor" stroke-width="4"/>
-                        <path class="opacity-75" fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                    </svg>
-                    Connexion en cours...
-                </span>
+            <button wire:click="connecter" wire:loading.attr="disabled" class="btn-login">
+                <span wire:loading.remove>Se connecter</span>
+                <span wire:loading>Connexion...</span>
             </button>
+        </div>
 
-        </form>
+        <div class="footer">© 2026 BTL — Banque Tuniso-Libyenne · Système SIBTEL</div>
     </div>
+</div>
 
-    {{-- Footer --}}
-    <p class="text-center text-slate-500 text-xs mt-6">
-        © 2026 SIBTEL — Société Interbancaire de Télécompensation
-    </p>
-
+<script>
+function toggleMode() {
+    const root = document.getElementById("login-root");
+    const icon = document.getElementById("toggle-icon");
+    const isDark = root.classList.contains("dark-mode");
+    root.classList.toggle("dark-mode", !isDark);
+    root.classList.toggle("light-mode", isDark);
+    icon.textContent = isDark ? "🌙" : "☀️";
+    localStorage.setItem("btl-theme", isDark ? "light" : "dark");
+}
+const saved = localStorage.getItem("btl-theme");
+if (saved === "light") {
+    document.getElementById("login-root").classList.replace("dark-mode","light-mode");
+    document.getElementById("toggle-icon").textContent = "🌙";
+}
+</script>
 </div>

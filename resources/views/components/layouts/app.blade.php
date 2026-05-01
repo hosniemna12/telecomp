@@ -161,17 +161,6 @@
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
             Retours pacs.004
         </a>
-        {{-- Badge fichiers en attente pour superviseur/admin --}}
-        @if(in_array(auth()->user()->role ?? '', ['superviseur','admin']))
-        @php $enAttente = \App\Models\TcFichier::where('statut','EN_ATTENTE_VALIDATION')->count(); @endphp
-        @if($enAttente > 0)
-        <a href="{{ route('fichiers.index') }}" class="nav-item" style="background:var(--yellow-dim);color:var(--yellow);margin-bottom:8px">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            {{ $enAttente }} fichier(s) à valider
-        </a>
-        @endif
-        @endif
-
         <div class="nav-section-label">Analyse</div>
         <a href="{{ route('stats.index') }}" class="nav-item {{ request()->routeIs('stats.index') ? 'active' : '' }}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -185,10 +174,6 @@
         <a href="{{ route('audit.index') }}" class="nav-item {{ request()->routeIs('audit.index') ? 'active' : '' }}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             Journal d'audit
-        </a>
-        <a href="{{ route('rapport.index') }}" class="nav-item {{ request()->routeIs('rapport.index') ? 'active' : '' }}">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
-            Rapports
         </a>
     </nav>
     <div class="sidebar-footer">
@@ -220,7 +205,10 @@
         </div>
         <div class="header-date" id="hdate"></div>
         <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" title="Mode clair/sombre">☀️</button>
-        @livewire('notifications')
+        <div class="notif-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+        </div>
     </div>
 </header>
 <main class="main">

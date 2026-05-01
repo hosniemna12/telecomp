@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AuditTrail extends Model
 {
@@ -18,15 +19,17 @@ class AuditTrail extends Model
         'ip_address',
         'donnees_avant',
         'donnees_apres',
-        'statut_action',
+        'statut',
         'created_at',
     ];
 
     protected $casts = [
-        'created_at' => 'datetime',
+        'created_at'    => 'datetime',
+        'donnees_avant' => 'array',
+        'donnees_apres' => 'array',
     ];
 
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
         static::creating(function ($model) {
@@ -36,8 +39,23 @@ class AuditTrail extends Model
         });
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function scopeSuccess($query)
+    {
+        return $query->where('statut', 'SUCCESS');
+    }
+
+    public function scopeFailed($query)
+    {
+        return $query->where('statut', 'FAILED');
+    }
+
+    public function scopeToday($query)
+    {
+        return $query->whereDate('created_at', today());
     }
 }

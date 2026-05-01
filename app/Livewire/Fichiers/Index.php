@@ -59,10 +59,11 @@ class Index extends Component
 
     public function render()
     {
-        $fichiers = TcFichier::withCount(['enrDetails', 'rejets'])
+        $fichiers = TcFichier::withCount(['enregistrementsDetails', 'rejets'])
             ->when($this->recherche, fn($q) =>
                 $q->where('nom_fichier', 'like', '%' . $this->recherche . '%')
             )
+            // CORRIGÉ : type_valeur est string(2), comparaison directe
             ->when($this->typeValeur, fn($q) =>
                 $q->where('type_valeur', $this->typeValeur)
             )
@@ -79,9 +80,10 @@ class Index extends Component
             ->paginate(10);
 
         $stats = [
-            'total'   => TcFichier::count(),
-            'traites' => TcFichier::where('statut', 'TRAITE')->count(),
-            'erreurs' => TcFichier::where('statut', 'ERREUR')->count(),
+            'total'          => TcFichier::count(),
+            'traites'        => TcFichier::whereIn('statut', ['TRAITE','VALIDE','EN_ATTENTE_VALIDATION','TRAITE_PARTIEL'])->count(),
+            'traite_partiel' => TcFichier::where('statut', 'TRAITE_PARTIEL')->count(),
+            'erreurs'        => TcFichier::where('statut', 'ERREUR')->count(),
         ];
 
         return view('livewire.fichiers.index', compact('fichiers', 'stats'));

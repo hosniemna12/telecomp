@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TcPacs004 extends Model
 {
@@ -38,24 +39,20 @@ class TcPacs004 extends Model
     ];
 
     protected $casts = [
-        'cre_dt_tm'              => 'datetime',
-        'valide_xsd'             => 'boolean',
+        'cre_dt_tm'             => 'datetime',
+        'valide_xsd'            => 'boolean',
         'rtr_intr_bk_sttlm_amt' => 'decimal:3',
     ];
 
-    // ── Relations ─────────────────────────────────────────────────
-
-    public function fichier()
+    public function fichier(): BelongsTo
     {
         return $this->belongsTo(TcFichier::class, 'fichier_id');
     }
 
-    public function rejet()
+    public function rejet(): BelongsTo
     {
         return $this->belongsTo(TcRejet::class, 'rejet_id');
     }
-
-    // ── Scopes ────────────────────────────────────────────────────
 
     public function scopeGeneres($query)
     {
@@ -65,5 +62,15 @@ class TcPacs004 extends Model
     public function scopeEnvoyes($query)
     {
         return $query->where('statut', 'ENVOYE');
+    }
+
+    public function getLibelleStatutAttribute(): string
+    {
+        return match($this->statut) {
+            'GENERE' => 'Généré',
+            'ENVOYE' => 'Envoyé',
+            'ERREUR' => 'Erreur',
+            default  => $this->statut ?? '?',
+        };
     }
 }
