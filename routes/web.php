@@ -32,7 +32,7 @@ Route::middleware('auth')->group(function () {
         ->name('dashboard');
 
     // ── Fichiers ──────────────────────────────────────────────────
-    // Upload : admin, operateur, superviseur (lecteur = lecture seule)
+    // Upload : admin, operateur, superviseur
     Route::get('/fichiers/upload', Upload::class)
         ->middleware('role:admin,operateur,superviseur')
         ->name('fichiers.upload');
@@ -66,9 +66,9 @@ Route::middleware('auth')->group(function () {
         );
     })->name('pacs004.telecharger');
 
-    // ── Stats : admin, superviseur, lecteur (pas operateur)
+    // ── Stats : admin, superviseur (pas operateur)
     Route::get('/stats', StatsIndex::class)
-        ->middleware('role:admin,superviseur,lecteur')
+        ->middleware('role:admin,superviseur')
         ->name('stats.index');
 
     // ── Utilisateurs : admin uniquement

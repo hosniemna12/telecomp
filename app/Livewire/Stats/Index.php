@@ -3,70 +3,111 @@
 namespace App\Livewire\Stats;
 
 use Livewire\Component;
-use Livewire\Attributes\Layout;
 use App\Models\TcFichier;
 use App\Models\TcEnrDetail;
-use App\Models\TcRejet;
-use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
-#[Layout('layouts.app')]
 class Index extends Component
 {
     public string $periode = '7';
 
-    public function render()
+    public array $kpis           = [];
+    public array $chartEvolution = [];
+    public array $chartStatut    = [];
+    public array $chartTypes     = [];
+    public array $chartRejets    = [];
+
+    public function mount(): void
     {
-        // CORRIGÉ : DATE() au lieu de TRUNC() — compatible SQLite et MySQL
-        $fichiersParJour = TcFichier::select(
-                DB::raw("TRUNC(date_reception) as jour"),
-                DB::raw("COUNT(*) as total"),
-                DB::raw("SUM(CASE WHEN statut = 'TRAITE' THEN 1 ELSE 0 END) as traites"),
-                DB::raw("SUM(CASE WHEN statut = 'ERREUR' THEN 1 ELSE 0 END) as erreurs")
-            )
-            ->where('date_reception', '>=', now()->subDays((int)$this->periode))
-            ->groupBy(DB::raw("TRUNC(date_reception)"))
-            ->orderBy(DB::raw('TRUNC(date_reception)'))
-            ->get();
+        $this->chargerStats();
+    }
 
-        // Répartition par type — CORRIGÉ : inclure tous les types SIBTEL
-        $parType = TcFichier::select('type_valeur', DB::raw("COUNT(*) as total"))
-            ->groupBy('type_valeur')
-            ->orderBy('total', 'desc')
-            ->get();
+    public function updatedPeriode(): void
+    {
+        $this->chargerStats();
+        $this->dispatch('stats-updated', [
+            'evolution' => $this->chartEvolution,
+            'statut'    => $this->chartStatut,
+            'types'     => $this->chartTypes,
+            'rejets'    => $this->chartRejets,
+        ]);
+    }
 
-        // Transactions par statut
-        $transactionsParStatut = TcEnrDetail::select('statut', DB::raw("COUNT(*) as total"))
-            ->groupBy('statut')
-            ->get();
+    private function chargerStats(): void
+    {
+        $debut = Carbon::now()->subDays((int) $this->periode);
 
-        // Top montants
-        $topTransactions = TcEnrDetail::where('statut', 'VALIDE')
-            ->orderBy('montant', 'desc')
-            ->take(5)
-            ->get();
+        $totalTx  = TcEnrDetail::where('created_at', '>=', $debut)->count();
+        $totalRej = TcEnrDetail::where('created_at', '>=', $debut)
+                        ->where('statut', 'REJETE')->count();
 
-        $totalTx = TcEnrDetail::count();
-
-        // CORRIGÉ : montant_moyen protégé contre division par zéro
-        $stats = [
-            'total_fichiers'     => TcFichier::count(),
+        $this->kpis = [
+            'total_fichiers'     => TcFichier::where('created_at', '>=', $debut)->count(),
             'total_transactions' => $totalTx,
-            'total_rejets'       => TcRejet::count(),
-            'montant_total'      => TcEnrDetail::where('statut', 'VALIDE')->sum('montant') ?? 0,
-            'montant_moyen'      => $totalTx > 0
-                ? round(TcEnrDetail::where('statut', 'VALIDE')->avg('montant') ?? 0, 3)
-                : 0,
-            'taux_rejet'         => $totalTx > 0
-                ? round(TcEnrDetail::where('statut', 'REJETE')->count() / $totalTx * 100, 2)
-                : 0,
+            'montant_total'      => TcEnrDetail::where('created_at', '>=', $debut)->sum('montant'),
+            'total_rejets'       => $totalRej,
+            'taux_rejet'         => $totalTx > 0 ? round($totalRej / $totalTx * 100, 2) : 0,
         ];
 
-        return view('livewire.stats.index', compact(
-            'fichiersParJour',
-            'parType',
-            'transactionsParStatut',
-            'topTransactions',
-            'stats'
-        ));
+        // Courbe évolution quotidienne
+        $jours = collect();
+        for ($i = (int)$this->periode - 1; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i)->toDateString();
+            $jours->push([
+                'date'    => Carbon::parse($date)->format('d M'),
+                'valides' => TcEnrDetail::whereDate('created_at', $date)
+                                ->where('statut', 'VALIDE')->count(),
+                'rejetes' => TcEnrDetail::whereDate('created_at', $date)
+                                ->where('statut', 'REJETE')->count(),
+            ]);
+        }
+        $this->chartEvolution = $jours->toArray();
+
+        // Donut statut
+        $this->chartStatut = [
+            'valides' => $totalTx - $totalRej,
+            'rejetes' => $totalRej,
+        ];
+
+        // Barres types de valeur — correspondance codes SIBTEL
+        $typeLabels = [
+            '10' => 'Virement',
+            '20' => 'Prélèvement',
+            '30' => 'Chèque',
+            '31' => 'CNP',
+            '32' => 'ARP',
+            '40' => 'LDC',
+            '84' => 'Papillon',
+        ];
+
+        $types = TcEnrDetail::where('created_at', '>=', $debut)
+            ->selectRaw('type_valeur, COUNT(*) as total')
+            ->groupBy('type_valeur')
+            ->orderByDesc('total')
+            ->get();
+
+        $this->chartTypes = $types->map(fn($t) => [
+            'label' => $typeLabels[$t->type_valeur] ?? 'Type '.$t->type_valeur,
+            'value' => $t->total,
+        ])->toArray();
+
+        // Taux de rejet quotidien
+        $tauxJours = collect();
+        for ($i = (int)$this->periode - 1; $i >= 0; $i--) {
+            $date  = Carbon::now()->subDays($i)->toDateString();
+            $total = TcEnrDetail::whereDate('created_at', $date)->count();
+            $rej   = TcEnrDetail::whereDate('created_at', $date)
+                        ->where('statut', 'REJETE')->count();
+            $tauxJours->push([
+                'date' => Carbon::parse($date)->format('d M'),
+                'taux' => $total > 0 ? round($rej / $total * 100, 1) : 0,
+            ]);
+        }
+        $this->chartRejets = $tauxJours->toArray();
+    }
+
+    public function render()
+    {
+        return view('livewire.stats.index', ['title' => 'Statistiques']);
     }
 }

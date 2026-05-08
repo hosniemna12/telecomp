@@ -9,7 +9,7 @@
     cursor: pointer;
     transition: all 0.15s;
 }
-.type-card:hover { border-color: rgba(201,168,76,0.4); background: var(--gold-glow); }
+.type-card:hover { border-color: rgba(26,95,71,0.4); background: var(--gold-glow); }
 .type-card.selected { border-color: var(--gold); background: var(--gold-dim); }
 .type-card-code { font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px }
 .type-card-name { font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:2px }
@@ -20,7 +20,13 @@
 .drop-zone:hover { border-color:var(--gold);background:var(--gold-glow) }
 .drop-icon { width:48px;height:48px;background:var(--gold-dim);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--gold) }
 .upload-form { max-width:750px;margin:0 auto }
+.btl-logo { margin-bottom:20px;text-align:center }
+.btl-logo img { max-width:180px;height:auto }
 </style>
+
+    <div class="btl-logo">
+        <img src="{{ asset('img/btl-logo.png') }}" alt="BTL Logo" style="max-width:180px">
+    </div>
 
     <div style="margin-bottom:28px">
         <h1 style="font-family:var(--font-display);font-size:26px;font-weight:700;color:var(--text-primary)">Importer un fichier T24</h1>
@@ -81,25 +87,10 @@
             @enderror
         </div>
 
-        @if(session("success"))
-        <div style="background:var(--green-dim);border:1px solid rgba(34,197,94,0.2);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;color:var(--green);font-size:13px">
-            ✓ {{ session("success") }}
-        </div>
-        @endif
-        @if(session("error"))
-        <div style="background:var(--red-dim);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;color:var(--red);font-size:13px">
-            ✗ {{ session("error") }}
-        </div>
-        @endif
         @if($erreur)
         <div style="background:var(--red-dim);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;margin-bottom:12px;color:var(--red);font-size:13px">✗ {{ $erreur }}</div>
         @endif
-        <div style="font-size:11px;color:yellow;margin-bottom:8px">DEBUG: type={{ $typeValeur }} | fichier={{ $fichier ? 'OK' : 'NULL' }}</div>
-        <button wire:click="traiter" wire:loading.attr="disabled"
-        {{-- DEBUG --}}
-        <div style="background:rgba(255,0,0,0.1);padding:10px;margin-bottom:10px;font-size:12px;color:red">
-            TypeValeur: {{ $typeValeur }} | Fichier: {{ $fichier ? $fichier->getClientOriginalName() : 'null' }} | Erreur: {{ $erreur }}
-        </div>
+
         <button wire:click="traiter" wire:loading.attr="disabled"
                 class="btn btn-primary"
                 style="width:100%;justify-content:center;padding:13px;font-size:14px">
@@ -111,5 +102,6 @@
             </span>
             <span wire:loading>⏳ Traitement en cours...</span>
         </button>
+
     </div>
 </div>

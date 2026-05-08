@@ -72,26 +72,26 @@
                     <span class="badge badge-danger">{{ $r->code_rejet ?? 'VALID_ERR' }}</span>
                 </td>
                 <td style="font-size:12px;color:var(--text-secondary);max-width:280px">
-                    {{ Str::limit($r->motif ?? '—', 60) }}
+                    {{ Str::limit($r->motif_rejet ?? '—', 60) }}
                 </td>
                 <td>
-                    <span class="badge badge-blue">{{ $r->etape ?? '—' }}</span>
+                    <span class="badge badge-blue">{{ $r->etape_detection ?? '—' }}</span>
                 </td>
                 <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">
-                    {{ Str::limit($r->rib_transaction ?? '—', 20) }}
+                    {{ Str::limit($r->detail->numero_virement ?? "—", 20) }}
                 </td>
                 <td>
-                    @if($r->statut === 'en_attente')
+                    @if(!$r->traite)
                         <span class="badge badge-warning">En attente</span>
-                    @elseif($r->statut === 'traite')
+                    @elseif($r->traite)
                         <span class="badge badge-success">Traité</span>
                     @else
-                        <span class="badge badge-muted">{{ $r->statut }}</span>
+                        <span class="badge badge-muted">{{ $r->traite ? "Traité" : "En attente" }}</span>
                     @endif
                 </td>
                 <td class="text-muted text-sm">{{ $r->created_at?->format('d/m H:i') }}</td>
                 <td>
-                    @if($r->statut !== 'traite')
+                    @if(!$r->traite)
                     <button wire:click="marquerTraite({{ $r->id }})" class="btn btn-secondary btn-sm">
                         Marquer traité
                     </button>

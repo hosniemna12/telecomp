@@ -15,7 +15,7 @@ with open(json_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
 # Couleurs BTL
-GOLD   = colors.HexColor('#c9a84c')
+GOLD   = colors.HexColor('#C41E3A')
 DARK   = colors.HexColor('#0a0d14')
 GRAY   = colors.HexColor('#f4f6fb')
 RED    = colors.HexColor('#ef4444')

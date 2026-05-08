@@ -47,6 +47,10 @@ class Dashboard extends Component
             'papillons'    => TcFichier::where('type_valeur', '84')->count(),
         ];
 
+        // Détecte le driver BD (Oracle utilise TRUNC, SQLite utilise DATE)
+        $isOracle = DB::getDriverName() === 'oracle';
+        $dateFunc = $isOracle ? 'TRUNC' : 'DATE';
+        
         $fichiersParJour = TcFichier::select(
                 DB::raw("TRUNC(date_reception) as jour"),
                 DB::raw("COUNT(*) as total"),

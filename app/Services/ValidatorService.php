@@ -42,6 +42,7 @@ class ValidatorService implements ValidatorInterface
 
             $this->validerRib($detail['rib_donneur'] ?? '', "Transaction $rang : RIB donneur", true);
 
+            // Le RIB bénéficiaire n'est pas obligatoire pour le type 33 (Chèque retour)
             $benef_obl = ($typeValeur !== '33');
             $this->validerRib($detail['rib_beneficiaire'] ?? '', "Transaction $rang : RIB beneficiaire", $benef_obl);
 
@@ -64,6 +65,8 @@ class ValidatorService implements ValidatorInterface
                 if (empty(trim($detail['ref_contrat'] ?? ''))) {
                     $this->erreurs[] = "Transaction $rang : ref_contrat manquant";
                 }
+                // Valider RIB créancier pour prélèvement
+                $this->validerRib($detail['rib_creancier'] ?? '', "Transaction $rang : RIB creancier", true);
                 break;
             case '30':
                 if (empty(trim($detail['date_emission'] ?? ''))) {

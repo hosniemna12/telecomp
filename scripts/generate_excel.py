@@ -10,7 +10,7 @@ excel_path = sys.argv[2]
 with open(json_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
-GOLD_HEX  = 'C9A84C'
+GOLD_HEX  = 'C41E3A'
 DARK_HEX  = '0A0D14'
 GRAY_HEX  = 'F4F6FB'
 GREEN_HEX = '22C55E'

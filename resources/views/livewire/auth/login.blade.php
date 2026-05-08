@@ -3,8 +3,9 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-    --gold: #c9a84c;
-    --gold-l: #e8c97a;
+    --gold: #1A5F47;
+    --gold-l: #4CAF7F;
+    --red-accent: #C41E3A;
     --bg-dark: #0a0d14;
     --bg-dark-card: #141928;
     --bg-dark-input: #0f1420;
@@ -40,6 +41,17 @@
     padding: 36px 32px;
     border: 1px solid;
     transition: background 0.3s, border-color 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+.login-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), transparent, var(--red-accent));
 }
 .dark-mode  .login-box { background: var(--bg-dark-card); border-color: var(--border-dark); }
 .light-mode .login-box { background: var(--bg-light-card); border-color: var(--border-light); box-shadow: 0 8px 40px rgba(0,0,0,0.08); }
@@ -50,9 +62,22 @@
     background: linear-gradient(135deg, var(--gold), var(--gold-l));
     border-radius: 14px;
     display: inline-flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 18px; color: #0a0d14;
+    font-weight: 800; font-size: 18px; color: white;
     margin-bottom: 14px;
     font-family: "Syne", sans-serif;
+    box-shadow: 0 8px 24px rgba(26,95,71,0.3);
+    position: relative;
+}
+.logo-icon::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    background: var(--red-accent);
+    border-radius: 50%;
+    border: 2px solid white;
 }
 .logo-title {
     font-family: "Syne", sans-serif;
@@ -90,35 +115,35 @@
 .btn-login {
     width: 100%; padding: 12px;
     background: linear-gradient(135deg, var(--gold), var(--gold-l));
-    color: #0a0d14; font-weight: 700; font-size: 14px;
+    color: white; font-weight: 700; font-size: 14px;
     border: none; border-radius: 8px; cursor: pointer;
     font-family: "Syne", sans-serif;
-    letter-spacing: 0.3px; transition: opacity 0.15s, transform 0.15s;
+    letter-spacing: 0.3px; transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
 }
-.btn-login:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-login:hover { opacity: 0.95; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,95,71,0.3); }
 
 .toggle-btn {
     position: fixed; top: 18px; right: 18px;
     width: 42px; height: 42px; border-radius: 50%;
-    border: 1.5px solid; cursor: pointer;
+    border: 2px solid var(--gold); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     font-size: 18px; transition: all 0.2s; z-index: 999;
     background: transparent;
+    color: var(--gold);
 }
-.dark-mode  .toggle-btn { border-color: rgba(255,255,255,0.15); color: var(--text-dark-1); }
-.light-mode .toggle-btn { border-color: rgba(0,0,0,0.12); color: var(--text-light-1); }
-.toggle-btn:hover { border-color: var(--gold); }
+.toggle-btn:hover { border-color: var(--red-accent); color: var(--red-accent); background: rgba(196,30,58,0.1); }
 
 .footer { text-align: center; margin-top: 20px; font-size: 11px; transition: color 0.3s; }
 .dark-mode  .footer { color: var(--text-dark-3); }
 .light-mode .footer { color: var(--text-light-3); }
 
 .error-box {
-    border-radius: 8px; padding: 10px 14px;
+    border-radius: 8px; padding: 12px 14px;
     margin-bottom: 18px; font-size: 13px;
-    background: rgba(239,68,68,0.1);
-    border: 1px solid rgba(239,68,68,0.25);
-    color: #ef4444;
+    background: rgba(196,30,58,0.1);
+    border: 1.5px solid var(--red-accent);
+    color: var(--red-accent);
+    font-weight: 500;
 }
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">

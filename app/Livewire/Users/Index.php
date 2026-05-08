@@ -36,7 +36,7 @@ class Index extends Component
             'name'     => 'required|min:3',
             'email'    => $emailRule,
             'password' => $passwordRule,
-            'role'     => 'required|in:admin,operateur,superviseur,lecteur',
+            'role'     => 'required|in:admin,operateur,superviseur',
         ];
     }
 
@@ -177,7 +177,6 @@ class Index extends Component
             'admins'       => User::where('role', 'admin')->count(),
             'operateurs'   => User::where('role', 'operateur')->count(),
             'superviseurs' => User::where('role', 'superviseur')->count(),
-            'lecteurs'     => User::where('role', 'lecteur')->count(),
         ];
 
         return view('livewire.users.index', compact('users', 'stats'));

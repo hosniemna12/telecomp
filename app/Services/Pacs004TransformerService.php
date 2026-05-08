@@ -730,6 +730,7 @@ class Pacs004TransformerService
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput       = true;
         $dom->loadXML($xml);
+        // Retourner le XML formaté et bien indienté
         return $dom->saveXML();
     }
 

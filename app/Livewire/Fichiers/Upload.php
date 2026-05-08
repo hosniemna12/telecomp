@@ -8,13 +8,6 @@ use Livewire\Attributes\Layout;
 use App\Services\FichierTraitementService;
 use App\Services\AuditService;
 
-/**
- * Upload — Composant Livewire d'upload et traitement des fichiers SIBTEL
- *
- * INJECTION DE DÉPENDANCES :
- * Livewire ne supporte pas l'injection dans le constructeur (sérialisation).
- * On injecte dans les méthodes action → pratique recommandée Livewire.
- */
 #[Layout('layouts.app')]
 class Upload extends Component
 {
@@ -41,8 +34,6 @@ class Upload extends Component
         'fichier.max'         => 'Le fichier ne doit pas dépasser 10 MB.',
     ];
 
-    // Auto-détection du type depuis le nom du fichier
-    // Format SIBTEL : RR-CCC-TT-NN.ENV  ex: 26-999-10-21-reel.ENV
     public function updatedFichier(): void
     {
         $this->resultat = [];
@@ -68,11 +59,6 @@ class Upload extends Component
         }
     }
 
-    /**
-     * Injection dans la méthode — bonne pratique Livewire
-     * Laravel résout automatiquement FichierTraitementService et AuditService
-     * grâce aux liaisons dans AppServiceProvider.
-     */
     public function traiter(
         FichierTraitementService $service,
         AuditService $audit
@@ -104,7 +90,6 @@ class Upload extends Component
                 throw new \RuntimeException("Fichier introuvable après upload : {$cheminComplet}");
             }
 
-            // ↓ Injection utilisée directement — pas de app()
             $this->resultat = $service->traiter($cheminComplet, $this->typeValeur);
 
             if ($this->resultat['succes']) {
@@ -118,6 +103,7 @@ class Upload extends Component
                 );
                 $this->erreur  = '';
                 $this->fichier = null;
+
             } else {
                 $audit->log('UPLOAD', 'FICHIERS',
                     "Échec upload : {$nomOriginal}", [], [], 'FAILED');

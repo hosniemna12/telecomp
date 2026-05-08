@@ -12,12 +12,12 @@
 .step-head{display:flex;align-items:center;margin-bottom:16px}
 
 .type-btn{padding:9px 18px;background:var(--bg-input);border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text-secondary);transition:all 0.15s;font-family:var(--font-body);font-weight:500}
-.type-btn:hover{border-color:rgba(201,168,76,0.4);color:var(--text-primary)}
+.type-btn:hover{border-color:rgba(26,95,71,0.4);color:var(--text-primary)}
 .type-btn.active{border-color:var(--gold);background:var(--gold-dim);color:var(--gold-light);font-weight:600}
 
 .fmt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .fmt-card{padding:18px;background:var(--bg-input);border:2px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:14px}
-.fmt-card:hover{border-color:rgba(201,168,76,0.4)}
+.fmt-card:hover{border-color:rgba(26,95,71,0.4)}
 .fmt-card.active{border-color:var(--gold);background:var(--gold-dim)}
 .fmt-icon{width:44px;height:44px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .fmt-icon.pdf{background:rgba(239,68,68,0.12)}

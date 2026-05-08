@@ -12,8 +12,8 @@
             --bg-base:#0a0d14;--bg-surface:#0f1420;--bg-card:#141928;
             --bg-input:#0f1420;--border:rgba(255,255,255,0.07);
             --border-active:rgba(255,255,255,0.15);
-            --gold:#c9a84c;--gold-light:#e8c97a;
-            --gold-dim:rgba(201,168,76,0.15);--gold-glow:rgba(201,168,76,0.08);
+            --gold:#1A5F47;--gold-light:#4CAF7F;
+            --gold-dim:rgba(26,95,71,0.15);--gold-glow:rgba(26,95,71,0.08);
             --blue-acc:#3b82f6;--blue-dim:rgba(59,130,246,0.12);
             --green:#22c55e;--green-dim:rgba(34,197,94,0.12);
             --red:#ef4444;--red-dim:rgba(239,68,68,0.12);
@@ -33,10 +33,10 @@
         }
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-family:var(--font-body);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;transition:background 0.3s,color 0.3s}
-        .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:var(--bg-surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;overflow:hidden;transition:background 0.3s,border-color 0.3s}
+        .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:linear-gradient(180deg,#1A5F47 0%,#0f1420 100%);border-right:2px solid var(--gold);display:flex;flex-direction:column;z-index:100;overflow:hidden;transition:background 0.3s,border-color 0.3s}
         .sidebar::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
         .sidebar-brand{padding:22px 20px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
-        .brand-logo{width:40px;height:40px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:15px;color:#0a0d14;flex-shrink:0}
+        .brand-logo{width:40px;height:40px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:15px;color:white;flex-shrink:0}
         .brand-name{font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--text-primary)}
         .brand-sub{font-size:11px;color:var(--gold);font-weight:500;letter-spacing:0.8px;text-transform:uppercase}
         .sidebar-nav{flex:1;overflow-y:auto;padding:16px 12px;scrollbar-width:none}
@@ -97,8 +97,8 @@
         .badge-blue{background:var(--blue-dim);color:var(--blue-acc)}.badge-blue::before{background:var(--blue-acc)}
         .badge-muted{background:rgba(255,255,255,0.05);color:var(--text-muted)}.badge-muted::before{background:var(--text-muted)}
         .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s;text-decoration:none;font-family:var(--font-body)}
-        .btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0a0d14;font-weight:600}
-        .btn-primary:hover{box-shadow:0 4px 20px rgba(201,168,76,0.4);transform:translateY(-1px)}
+        .btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:white;font-weight:600;border:1px solid var(--gold)}
+        .btn-primary:hover{box-shadow:0 4px 20px rgba(26,95,71,0.4);transform:translateY(-1px)}
         .btn-secondary{background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border)}
         .btn-secondary:hover{border-color:var(--border-active);color:var(--text-primary)}
         .btn-danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,0.2)}
@@ -224,9 +224,11 @@
     </div>
 </header>
 <main class="main">
-    {{ $slot }}
+    {{ $slot ?? '' }}
+    @yield('content')
 </main>
 @livewireScripts
+@stack('scripts')
 <script>
 function toggleTheme(){
     const b=document.body;

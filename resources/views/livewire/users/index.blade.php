@@ -36,10 +36,7 @@
         <span class="badge badge-blue role-badge" style="padding:2px 6px">Opérateur</span>
         <span style="color:var(--text-muted)">Traitement fichiers</span>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:20px;font-size:12px">
-        <span class="badge badge-muted role-badge" style="padding:2px 6px">Lecteur</span>
-        <span style="color:var(--text-muted)">Consultation seule</span>
-    </div>
+
 </div>
 
 @if(session('success'))
@@ -68,9 +65,9 @@
         <tbody>
         @forelse($users as $u)
         @php
-            $roleColors = ['admin'=>'danger','superviseur'=>'gold','operateur'=>'blue','lecteur'=>'muted'];
-            $rolePerms  = ['admin'=>'Tout','superviseur'=>'Upload, Rejets, Stats','operateur'=>'Upload, Rejets','lecteur'=>'Vue seule'];
-            $role = $u->role ?? 'lecteur';
+            $roleColors = ['admin'=>'danger','superviseur'=>'gold','operateur'=>'blue'];
+            $rolePerms  = ['admin'=>'Tout','superviseur'=>'Upload, Rejets, Stats','operateur'=>'Upload, Rejets'];
+            $role = $u->role ?? 'operateur';
         @endphp
         <tr>
             <td>
@@ -140,7 +137,6 @@
                 <option value="admin">Administrateur — Accès total</option>
                 <option value="superviseur">Superviseur — Supervision & validation</option>
                 <option value="operateur">Opérateur — Traitement fichiers</option>
-                <option value="lecteur">Lecteur — Consultation seule</option>
             </select>
 
             @if($role === 'admin')
@@ -154,10 +150,6 @@
             @elseif($role === 'operateur')
             <div style="margin-top:8px;padding:8px 12px;background:var(--blue-dim);border-radius:var(--radius-sm);font-size:11.5px;color:var(--blue-acc)">
                 Upload fichiers, traitement rejets, génération XML
-            </div>
-            @elseif($role === 'lecteur')
-            <div style="margin-top:8px;padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);font-size:11.5px;color:var(--text-muted)">
-                Consultation seule : dashboard, fichiers traités, statistiques. Aucune écriture
             </div>
             @endif
         </div>

@@ -325,7 +325,7 @@ class FichierTraitementService
                 $data['libelle_prelevement'] = mb_substr($detail['libelle_prelevement'] ?? '', 0, 50);
                 $data['date_compensation']   = $detail['date_compensation']   ?? '';
                 $data['date_echeance']       = $detail['date_echeance']       ?? '';
-                $data['code_payeur']         = $detail['motif_rejet']         ?? '';
+                $data['code_payeur']         = $detail['code_payeur']         ?? '';
                 $data['motif_operation']     = mb_substr($detail['motif_operation'] ?? '', 0, 45);
                 break;
 
@@ -436,7 +436,7 @@ class FichierTraitementService
 
     protected function log(string $level, string $message, array $context = []): void
     {
-        Log::$level($message, $context);
+        Log::log($level, $message, $context);
 
         if (isset($context['fichier_id'])) {
             $etape      = $context['etape'] ?? 'GENERAL';

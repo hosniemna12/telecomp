@@ -9,3 +9,12 @@ public/hot
 public/storage
 *.log
 .phpunit.result.cache
+
+# Fichiers inutiles
+*.blade.php.php
+GenerateurFichiersTest.ps1
+generate_test.php
+Image.pdf
+*.tmp
+*.bak
+

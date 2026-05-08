@@ -45,9 +45,10 @@ class XmlViewer extends Component
             $dom->preserveWhiteSpace = false;
             $dom->formatOutput       = true;
             $dom->loadXML($xml);
-            return htmlspecialchars($dom->saveXML());
+            // Ne pas utiliser htmlspecialchars() - retourner le XML brut
+            return $dom->saveXML();
         } catch (\Exception $e) {
-            return htmlspecialchars($xml);
+            return $xml;
         }
     }
 

@@ -134,7 +134,7 @@
             <div style="flex:1">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                     <span style="font-size:13px;font-weight:500;color:var(--text-primary)">{{ $c->user->name ?? 'Système' }}</span>
-                    @php $roleColors=['admin'=>'danger','superviseur'=>'gold','operateur'=>'blue','lecteur'=>'muted']; @endphp
+                    @php $roleColors=['admin'=>'danger','superviseur'=>'gold','operateur'=>'blue']; @endphp
                     <span class="badge badge-{{ $roleColors[$c->user->role ?? ''] ?? 'muted' }}" style="font-size:9px;padding:1px 6px">{{ ucfirst($c->user->role ?? '—') }}</span>
                     @if($c->type === 'VALIDATION') <span class="badge badge-success" style="font-size:9px;padding:1px 6px">Validation</span>
                     @elseif($c->type === 'REJET') <span class="badge badge-danger" style="font-size:9px;padding:1px 6px">Rejet</span>
