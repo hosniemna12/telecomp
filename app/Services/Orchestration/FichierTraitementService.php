@@ -16,6 +16,7 @@ use App\Contracts\TransformerInterface;
 use Illuminate\Support\Facades\Auth;
 use App\Models\TcNotification;
 use App\Models\User;
+use App\Services\Audit\LogService;
 
 class FichierTraitementService
 {

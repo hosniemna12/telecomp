@@ -6,7 +6,7 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use App\Models\TcFichier;
 use App\Models\TcCommentaire;
-use App\Services\Workflow\ValidationService;
+use App\Services\Workflow\FichierWorkflowService;
 use App\Services\Transformation\XmlTransformerService;
 use App\Services\Audit\AuditService;
 use Illuminate\Support\Facades\Auth;
@@ -36,7 +36,7 @@ class Show extends Component
         $this->showModalRejet = true;
     }
 
-    public function confirmerValidation(ValidationService $service): void
+    public function confirmerValidation(FichierWorkflowService $service): void
     {
         $fichier = TcFichier::findOrFail($this->id);
         $service->valider($fichier, $this->commentaireValidation);
@@ -48,7 +48,7 @@ class Show extends Component
         session()->flash('success', 'Fichier validé — XML en cours de génération.');
     }
 
-    public function confirmerRejet(ValidationService $service): void
+    public function confirmerRejet(FichierWorkflowService $service): void
     {
         if (empty(trim($this->motifRejet))) {
             session()->flash('error', 'Le motif de rejet est obligatoire.');
@@ -63,7 +63,7 @@ class Show extends Component
         session()->flash('success', 'Fichier rejeté — l\'opérateur a été notifié.');
     }
 
-    public function ajouterCommentaire(ValidationService $service): void
+    public function ajouterCommentaire(FichierWorkflowService $service): void
     {
         if (empty(trim($this->nouveauCommentaire))) return;
 
@@ -73,7 +73,7 @@ class Show extends Component
         $this->nouveauCommentaire = '';
     }
 
-    public function resoumettre(ValidationService $service): void
+    public function resoumettre(FichierWorkflowService $service): void
     {
         $fichier = TcFichier::findOrFail($this->id);
         $service->soumettreValidation($fichier);

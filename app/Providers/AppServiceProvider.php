@@ -11,7 +11,7 @@ use App\Services\Parsing\EnvParserService;
 use App\Services\Validation\ValidatorService;
 use App\Services\Transformation\XmlTransformerService;
 use App\Services\Audit\LogService;
-use App\Services\Workflow\ValidationService;
+use App\Services\Workflow\FichierWorkflowService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ValidatorInterface::class,   ValidatorService::class);
         $this->app->bind(TransformerInterface::class, XmlTransformerService::class);
         $this->app->bind(LoggerInterface::class,      LogService::class);
-        $this->app->singleton(ValidationService::class);
+        $this->app->singleton(FichierWorkflowService::class);
     }
 
     public function boot(): void {}
