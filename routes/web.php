@@ -11,7 +11,6 @@ use App\Livewire\Rejets\Index as RejetsIndex;
 use App\Livewire\Rejets\Pacs004Generator;
 use App\Livewire\Users\Index as UsersIndex;
 use App\Livewire\Stats\Index as StatsIndex;
-use App\Livewire\Profile\Index as ProfileIndex;
 use App\Livewire\Outils\VerificateurRib;
 use App\Livewire\Profile\Show as ProfileShow;
 use App\Livewire\Audit\Index as AuditIndex;
@@ -75,10 +74,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/users', UsersIndex::class)
         ->middleware('role:admin')
         ->name('users.index');
-
-    // ── Profil : tous
-    Route::get('/profile', ProfileIndex::class)
-        ->name('profile.index');
 
     // ── Outils : tous
     Route::get('/outils/rib', VerificateurRib::class)
