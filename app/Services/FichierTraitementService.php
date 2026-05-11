@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use App\Models\TcFichier;
 use App\Models\TcEnrGlobal;
 use App\Models\TcEnrDetail;
@@ -16,16 +17,6 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\TcNotification;
 use App\Models\User;
 
-/**
- * FichierTraitementService — Pipeline complet SIBTEL
- *
- * Corrections :
- *  - type_valeur string (pas 'TND')
- *  - Persistance de TOUS les champs par type de valeur
- *  - Montant déjà en TND, pas de double conversion
- *  - Validation globale + individuelle correcte
- *  - Mise à jour nb_transactions, nb_rejets, montant_total
- */
 class FichierTraitementService
 {
     protected ParserInterface      $parser;
@@ -45,6 +36,120 @@ class FichierTraitementService
         $this->logService  = $logService;
     }
 
+    // ──────────────────────────────────────────────────────────────
+    // ESTIMATION ML — Appel Flask pour une transaction (10 features)
+    // ──────────────────────────────────────────────────────────────
+    private function estimerRejet(array $detail, array $global = []): array
+    {
+        try {
+            $mlUrl    = config('services.ml.url', 'http://127.0.0.1:5000');
+            $rib_don  = trim($detail['rib_donneur']      ?? '');
+            $rib_dest = trim($detail['rib_beneficiaire'] ?? '');
+
+            // ── Validation des RIBs par modulo 97 (algorithme officiel BCT) ──
+            $rib_don_valide  = $this->verifierRibModulo97($rib_don)  ? 1 : 0;
+            $rib_dest_valide = $this->verifierRibModulo97($rib_dest) ? 1 : 0;
+
+            // ── Codes banques (extraits des RIBs) ─────────────────
+            $code_banque_don  = strlen($rib_don)  >= 2 ? substr($rib_don,  0, 2) : '26';
+            $code_banque_dest = strlen($rib_dest) >= 2 ? substr($rib_dest, 0, 2) : '26';
+            $meme_banque      = ($code_banque_don === $code_banque_dest) ? 1 : 0;
+
+            // ── Calcul echeance depassee ──────────────────────────
+            $echeance_depassee = 0;
+            $dateEcheance = $detail['date_echeance']
+                         ?? $detail['date_compensation']
+                         ?? '';
+            if (!empty($dateEcheance) && strlen($dateEcheance) >= 8) {
+                try {
+                    $dateStr = preg_replace('/[^0-9]/', '', $dateEcheance);
+                    if (strlen($dateStr) === 8) {
+                        $annee = (int)substr($dateStr, 0, 4);
+                        $date = ($annee >= 1900 && $annee <= 2100)
+                            ? \DateTime::createFromFormat('Ymd', $dateStr)
+                            : \DateTime::createFromFormat('dmY', $dateStr);
+                        if ($date && $date < new \DateTime('today')) {
+                            $echeance_depassee = 1;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Date invalide → on garde 0
+                }
+            }
+
+            // ── Construction du payload (10 features alignees avec le notebook) ──
+            $payload = [
+                'type_valeur'             => $detail['type_valeur']       ?? '10',
+                'montant'                 => (float)($detail['montant']   ?? 0),
+                'code_banque_don'         => $code_banque_don,
+                'code_banque_dest'        => $code_banque_dest,
+                'rib_donneur_valide'      => $rib_don_valide,
+                'rib_beneficiaire_valide' => $rib_dest_valide,
+                'echeance_depassee'       => $echeance_depassee,
+                'meme_banque'             => $meme_banque,
+                'situation_donneur'       => $detail['situation_donneur'] ?? '0',
+                'type_compte'             => $detail['type_compte']       ?? '1',
+            ];
+
+            $response = Http::timeout(5)->post("{$mlUrl}/predict", $payload);
+
+            if ($response->successful()) {
+                $result = $response->json();
+
+                // ── Boost SIBTEL : si rejet deja detecte, score min 75 ──
+                $motifRejet = trim($detail['motif_rejet'] ?? '00000000');
+                $aDejaUnRejet = !empty($motifRejet) && $motifRejet !== '00000000';
+
+                if ($aDejaUnRejet && ($result['score'] ?? 0) < 75) {
+                    $result['score']   = 80;
+                    $result['couleur'] = 'rouge';
+                    $result['rejete']  = true;
+                    $result['explications'] = $result['explications'] ?? [];
+                    array_unshift($result['explications'], [
+                        'feature' => 'motif_rejet',
+                        'libelle' => 'Code de rejet SIBTEL detecte',
+                        'detail'  => 'Code : ' . substr($motifRejet, 0, 2),
+                        'gravite' => 'haute',
+                    ]);
+                    $result['explications'] = array_slice($result['explications'], 0, 3);
+                }
+
+                return $result;
+            }
+
+            return ['score' => null, 'couleur' => null, 'rejete' => null, 'proba' => null, 'explications' => []];
+
+        } catch (\Exception $e) {
+            Log::warning('ML estimation failed: ' . $e->getMessage());
+            return ['score' => null, 'couleur' => null, 'rejete' => null, 'proba' => null, 'explications' => []];
+        }
+    }
+
+    /**
+     * Verifie la cle d'un RIB tunisien (modulo 97).
+     * Format attendu : 20 chiffres (banque + agence + compte + cle).
+     *
+     * @param  string  $rib  RIB a verifier
+     * @return bool   true si la cle est valide, false sinon
+     */
+    private function verifierRibModulo97(string $rib): bool
+    {
+        if (strlen($rib) !== 20 || !ctype_digit($rib)) {
+            return false;
+        }
+
+        $rib_partiel = substr($rib, 0, 18);   // banque + agence + compte (18 chiffres)
+        $cle_fournie = (int)substr($rib, 18); // 2 derniers chiffres
+
+        // Calcul modulo 97 avec bcmod pour gerer les grands nombres (18+ chiffres)
+        $cle_calculee = 97 - (int)bcmod($rib_partiel . '00', '97');
+
+        return $cle_calculee === $cle_fournie;
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // PIPELINE PRINCIPAL
+    // ──────────────────────────────────────────────────────────────
     public function traiter(string $cheminFichier, string $typeForce = ''): array
     {
         $resultat = [
@@ -52,6 +157,7 @@ class FichierTraitementService
             'fichier_id' => null,
             'message'    => '',
             'stats'      => [],
+            'ml'         => [],
         ];
 
         DB::beginTransaction();
@@ -135,19 +241,58 @@ class FichierTraitementService
             $montantTotal  = 0.0;
             $detailsModels = [];
 
+            // ── Stats ML (avec agrégation des raisons) ────────────
+            $mlStats = [
+                'total'        => 0,
+                'rouge'        => 0,
+                'orange'       => 0,
+                'vert'         => 0,
+                'score_global' => 0,
+                'scores'       => [],
+                'disponible'   => false,
+                'top_raisons'  => [],
+            ];
+
             foreach ($donnees['details'] as $detail) {
                 $detailModel = TcEnrDetail::create(
                     $this->construireDataDetail($fichier->id, $detail)
                 );
                 $detailsModels[] = $detailModel;
 
+                // ── Estimation ML ──────────────────────────────────
+                $mlResult = $this->estimerRejet($detail, $global ?? []);
 
-                // Verification motif rejet SIBTEL avant validation
+                if ($mlResult['score'] !== null) {
+                    $mlStats['disponible'] = true;
+                    $mlStats['total']++;
+                    $mlStats['scores'][] = $mlResult['score'];
+
+                    match($mlResult['couleur']) {
+                        'rouge'  => $mlStats['rouge']++,
+                        'orange' => $mlStats['orange']++,
+                        default  => $mlStats['vert']++,
+                    };
+
+                    // ── Agrégation des raisons ─────────────────────
+                    foreach ($mlResult['explications'] ?? [] as $expl) {
+                        $key = $expl['libelle'] ?? 'Inconnu';
+                        if (!isset($mlStats['top_raisons'][$key])) {
+                            $mlStats['top_raisons'][$key] = [
+                                'libelle'    => $expl['libelle'] ?? 'Inconnu',
+                                'detail'     => $expl['detail']  ?? '',
+                                'gravite'    => $expl['gravite'] ?? 'faible',
+                                'occurences' => 0,
+                            ];
+                        }
+                        $mlStats['top_raisons'][$key]['occurences']++;
+                    }
+                }
+
+                // ── Validation SIBTEL ──────────────────────────────
                 $motifRejet = trim($detail['motif_rejet'] ?? '00000000');
                 $estRejete  = !empty($motifRejet) && $motifRejet !== '00000000';
 
                 if ($estRejete) {
-                    // Transaction rejetee par SIBTEL - pas besoin de valider
                     $detailModel->update(['statut' => 'REJETE']);
                     $nbRejetes++;
                     TcRejet::create([
@@ -184,6 +329,21 @@ class FichierTraitementService
                 }
             }
 
+            // ── Calcul score global ML ──────────────────────────────
+            if ($mlStats['disponible'] && count($mlStats['scores']) > 0) {
+                $mlStats['score_global'] = (int)(array_sum($mlStats['scores']) / count($mlStats['scores']));
+            }
+            unset($mlStats['scores']);
+
+            // ── Tri & top 5 des raisons ───────────────────
+            if (!empty($mlStats['top_raisons'])) {
+                $raisons = array_values($mlStats['top_raisons']);
+                usort($raisons, fn($a, $b) => $b['occurences'] - $a['occurences']);
+                $mlStats['top_raisons'] = array_slice($raisons, 0, 5);
+            } else {
+                $mlStats['top_raisons'] = [];
+            }
+
             $this->log('info', "Validation : {$nbValides} valides, {$nbRejetes} rejetés", [
                 'fichier_id' => $fichier->id,
                 'etape'      => 'VALIDATION',
@@ -215,15 +375,15 @@ class FichierTraitementService
             }
 
             // 6. Statut final
-            $user = \Illuminate\Support\Facades\Auth::user();
+            $user = Auth::user();
             $role = $user->role ?? 'admin';
 
             $statut = match(true) {
                 $nbRejetes === 0 && $nbValides > 0 && $role === 'operateur' => 'EN_ATTENTE_VALIDATION',
-                $nbRejetes === 0 && $nbValides > 0 => 'TRAITE',
-                $nbValides > 0 && $nbRejetes > 0 && $role === 'operateur' => 'EN_ATTENTE_VALIDATION',
-                $nbValides > 0 && $nbRejetes > 0   => 'TRAITE_PARTIEL',
-                default                             => 'ERREUR',
+                $nbRejetes === 0 && $nbValides > 0                          => 'TRAITE',
+                $nbValides > 0 && $nbRejetes > 0 && $role === 'operateur'  => 'EN_ATTENTE_VALIDATION',
+                $nbValides > 0 && $nbRejetes > 0                            => 'TRAITE_PARTIEL',
+                default                                                      => 'ERREUR',
             };
 
             $fichier->update([
@@ -236,9 +396,9 @@ class FichierTraitementService
 
             // Notifier superviseurs si operateur
             if ($role === 'operateur' && $statut === 'EN_ATTENTE_VALIDATION') {
-                $superviseurs = \App\Models\User::whereIn('role', ['superviseur', 'admin'])->get();
+                $superviseurs = User::whereIn('role', ['superviseur', 'admin'])->get();
                 foreach ($superviseurs as $sup) {
-                    \App\Models\TcNotification::create([
+                    TcNotification::create([
                         'user_id'    => $sup->id,
                         'titre'      => 'Nouveau fichier a valider',
                         'message'    => "L'operateur {$user->name} a soumis {$fichier->nom_fichier} — {$nbValides} transactions valides.",
@@ -261,6 +421,7 @@ class FichierTraitementService
                     'rejetes' => $nbRejetes,
                     'statut'  => $statut,
                 ],
+                'ml' => $mlStats,
             ];
 
         } catch (\Exception $e) {

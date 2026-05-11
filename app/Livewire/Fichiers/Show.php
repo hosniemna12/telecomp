@@ -15,11 +15,11 @@ use Illuminate\Support\Facades\Auth;
 class Show extends Component
 {
     public int    $id;
-    public string $nouveauCommentaire   = '';
+    public string $nouveauCommentaire    = '';
     public string $commentaireValidation = '';
-    public string $motifRejet           = '';
-    public bool   $showModalValidation  = false;
-    public bool   $showModalRejet       = false;
+    public string $motifRejet            = '';
+    public bool   $showModalValidation   = false;
+    public bool   $showModalRejet        = false;
 
     public function mount(int $id): void
     {
@@ -41,10 +41,9 @@ class Show extends Component
         $fichier = TcFichier::findOrFail($this->id);
         $service->valider($fichier, $this->commentaireValidation);
 
-        // Générer XML automatiquement après validation
         $this->dispatch('xml-genere');
 
-        $this->showModalValidation  = false;
+        $this->showModalValidation   = false;
         $this->commentaireValidation = '';
         session()->flash('success', 'Fichier validé — XML en cours de génération.');
     }
@@ -79,6 +78,28 @@ class Show extends Component
         $fichier = TcFichier::findOrFail($this->id);
         $service->soumettreValidation($fichier);
         session()->flash('success', 'Fichier resoumis pour validation.');
+    }
+
+    // ✅ AJOUTÉ : Télécharger le XML généré
+    public function telechargerXml(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $fichier = TcFichier::with('xmlProduit')->findOrFail($this->id);
+
+        abort_unless($fichier->xmlProduit && $fichier->xmlProduit->contenu_xml, 404, 'XML non encore généré.');
+
+        $typeMessage = $fichier->xmlProduit->type_message ?? 'xml';
+        $nomFichier  = pathinfo($fichier->nom_fichier, PATHINFO_FILENAME) . '.xml';
+
+        return response()->streamDownload(
+            function () use ($fichier) {
+                echo $fichier->xmlProduit->contenu_xml;
+            },
+            $nomFichier,
+            [
+                'Content-Type'        => 'application/xml',
+                'Content-Disposition' => 'attachment; filename="' . $nomFichier . '"',
+            ]
+        );
     }
 
     public function render()

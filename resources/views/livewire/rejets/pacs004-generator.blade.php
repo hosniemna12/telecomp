@@ -110,7 +110,14 @@
                 <td class="text-muted text-sm">{{ $p->created_at?->format('d/m/Y H:i') }}</td>
                 <td>
                     <div class="flex gap-3">
-                        <a href="{{ route('pacs004.telecharger', $p->id) }}" class="btn btn-secondary btn-sm">
+                        <button wire:click="voirXml({{ $p->id }})" class="btn btn-ghost btn-sm" title="Voir le XML">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            Voir
+                        </button>
+                        <a href="{{ route('pacs004.telecharger', $p->id) }}" class="btn btn-secondary btn-sm" title="Télécharger le XML">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                             XML
                         </a>
@@ -127,6 +134,10 @@
         </tbody>
     </table>
 </div>
+
+{{-- ═══════════════════════════════════════════════════════ --}}
+{{-- MODAL CONFIRMATION GENERATION                          --}}
+{{-- ═══════════════════════════════════════════════════════ --}}
 @if($showModal)
 <div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center">
     <div class="card" style="width:480px;padding:28px">
@@ -151,4 +162,121 @@
     </div>
 </div>
 @endif
+
+{{-- ═══════════════════════════════════════════════════════ --}}
+{{-- MODAL VISUALISATION XML PACS.004                       --}}
+{{-- ═══════════════════════════════════════════════════════ --}}
+@if($showXmlModal)
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px)">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:1100px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+
+        {{-- Header de la modal --}}
+        <div style="padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+            <div>
+                <div style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text-primary)">
+                    Visualiseur XML — pacs.004.001.11
+                </div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Payment Return ISO 20022</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+                <button onclick="copierXmlPacs004()" class="btn btn-secondary btn-sm" title="Copier dans le presse-papier">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px">
+                        <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                    <span id="copy-pacs004-label">Copier</span>
+                </button>
+                <button wire:click="fermerXml" class="btn btn-ghost btn-sm" title="Fermer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        {{-- Editeur XML avec coloration --}}
+        <div style="background:#0d1117;flex:1;overflow:auto">
+            {{-- Toolbar style "VS Code" --}}
+            <div style="background:#161b22;border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1">
+                <div style="display:flex;gap:6px">
+                    <span style="width:12px;height:12px;border-radius:50%;background:#ff5f56"></span>
+                    <span style="width:12px;height:12px;border-radius:50%;background:#ffbd2e"></span>
+                    <span style="width:12px;height:12px;border-radius:50%;background:#27c93f"></span>
+                </div>
+                <span style="font-size:11px;color:#8b949e;font-family:monospace">pacs.004.xml</span>
+                <span style="font-size:11px;color:#8b949e">XML ISO 20022</span>
+            </div>
+
+            {{-- Contenu XML formate avec numeros de lignes --}}
+            @php
+                $xmlFormate = $xmlContent;
+                try {
+                    $dom = new \DOMDocument('1.0');
+                    $dom->preserveWhiteSpace = false;
+                    $dom->formatOutput = true;
+                    if (!empty($xmlContent) && @$dom->loadXML($xmlContent)) {
+                        $xmlFormate = $dom->saveXML();
+                    }
+                } catch (\Throwable $e) {
+                    $xmlFormate = $xmlContent;
+                }
+            @endphp
+
+            <table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:12px">
+                <tbody>
+                @foreach(explode("\n", $xmlFormate) as $numero => $ligne)
+                <tr style="transition:background 0.1s" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                    <td style="text-align:right;color:#3d444d;padding:2px 12px;border-right:1px solid #21262d;width:50px;user-select:none;vertical-align:top">
+                        {{ $numero + 1 }}
+                    </td>
+                    <td style="padding:2px 16px;white-space:pre;color:#e6edf3">@php
+                        $l = htmlspecialchars($ligne);
+                        $l = preg_replace('/(&lt;\/?)([\w:.]+)/', '$1<span style="color:#7ee787">$2</span>', $l);
+                        $l = preg_replace('/([\w:]+)=(&quot;[^&]*&quot;)/', '<span style="color:#79c0ff">$1</span>=<span style="color:#a5d6ff">$2</span>', $l);
+                        echo $l;
+                    @endphp</td>
+                </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        {{-- Footer avec infos --}}
+        <div style="padding:12px 24px;border-top:1px solid var(--border);display:flex;gap:20px;font-size:12px;color:var(--text-muted);flex-shrink:0;background:var(--bg-input)">
+            <div>
+                <span style="color:var(--text-secondary)">Lignes :</span>
+                {{ count(explode("\n", $xmlFormate)) }}
+            </div>
+            <div>
+                <span style="color:var(--text-secondary)">Taille :</span>
+                {{ number_format(strlen($xmlFormate) / 1024, 1) }} Ko
+            </div>
+            <div>
+                <span style="color:var(--text-secondary)">Format :</span>
+                pacs.004.001.11
+            </div>
+            <div style="margin-left:auto">
+                <span style="color:var(--green)">●</span> XML valide
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Script pour copier le XML --}}
+<script>
+function copierXmlPacs004() {
+    const lignes = document.querySelectorAll('[style*="white-space:pre"]');
+    let texte = '';
+    lignes.forEach(l => { texte += l.innerText + '\n'; });
+    navigator.clipboard.writeText(texte).then(() => {
+        const label = document.getElementById('copy-pacs004-label');
+        if (label) {
+            label.textContent = 'Copié !';
+            setTimeout(() => label.textContent = 'Copier', 2000);
+        }
+    });
+}
+</script>
+@endif
+
 </div>

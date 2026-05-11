@@ -36,7 +36,7 @@ return [
     ],
 
     'ml' => [
-        'url' => env('ML_SERVER_URL', 'http://ml:5000'),
+        'url' => env('ML_SERVER_URL', 'http://127.0.0.1:5000'),
         'timeout' => env('ML_SERVER_TIMEOUT', 30),
     ],
 

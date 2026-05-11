@@ -1,0 +1,334 @@
+<mxfile host="Electron" modified="2026-05-09T00:00:00.000Z" agent="5.0" etag="complete" version="20.0.0" type="device">
+  <diagram id="uml-telecompensation-complete" name="Telecompensation UML Complete">
+    <mxGraphModel dx="2400" dy="1600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1600" background="none" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- ==================== INTERFACES ==================== -->
+        <mxCell id="logger-interface" value="&lt;&lt;interface&gt;&gt;&#xa;LoggerInterface" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="50" y="50" width="200" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="logger-methods" value="+ info(id, etape, msg): void&#xa;+ warning(id, etape, msg): void&#xa;+ erreur(id, etape, msg): void" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="logger-interface">
+          <mxGeometry y="40" width="200" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="parser-interface" value="&lt;&lt;interface&gt;&gt;&#xa;ParserInterface" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="300" y="50" width="200" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="parser-methods" value="+ parse(fichier): array&#xa;+ supporte(fichier): bool" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="parser-interface">
+          <mxGeometry y="40" width="200" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="validator-interface" value="&lt;&lt;interface&gt;&gt;&#xa;ValidatorInterface" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#e1d5e7;strokeColor:#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="550" y="50" width="200" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="validator-methods" value="+ valider(donnees): bool&#xa;+ getErreurs(): array" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="validator-interface">
+          <mxGeometry y="40" width="200" height="80" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="transformer-interface" value="&lt;&lt;interface&gt;&gt;&#xa;TransformerInterface" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#e1d5e7;strokeColor:#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="800" y="50" width="200" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="transformer-methods" value="+ transformer(donnees): string&#xa;+ getTypeMessage(): string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="transformer-interface">
+          <mxGeometry y="40" width="200" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- ==================== MODELS (Row 1) ==================== -->
+        <mxCell id="user-class" value="User" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#d4e6f1;strokeColor=#2874a6;" vertex="1" parent="1">
+          <mxGeometry x="50" y="250" width="180" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="user-attr" value="+ id: int&#xa;+ name: string&#xa;+ email: string&#xa;+ password: string&#xa;+ role: string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="user-class">
+          <mxGeometry y="26" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="user-sep" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;rotatable=0;points=[];portConstraint=eastwest;" vertex="1" parent="user-class">
+          <mxGeometry y="106" width="180" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="user-methods" value="+ isAdmin(): bool&#xa;+ isOperateur(): bool&#xa;+ isSuperviseur(): bool" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="user-class">
+          <mxGeometry y="114" width="180" height="66" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="audittrail-class" value="AuditTrail" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#d4e6f1;strokeColor:#2874a6;" vertex="1" parent="1">
+          <mxGeometry x="280" y="250" width="200" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="audittrail-attr" value="+ id: int&#xa;+ user_id: int&#xa;+ action: string&#xa;+ module: string&#xa;+ description: string&#xa;+ ip_address: string&#xa;+ donnees_avant: json&#xa;+ donnees_apres: json&#xa;+ statut: string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="audittrail-class">
+          <mxGeometry y="26" width="200" height="154" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="loginhistory-class" value="LoginHistory" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#d4e6f1;strokeColor:#2874a6;" vertex="1" parent="1">
+          <mxGeometry x="530" y="250" width="200" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="loginhistory-attr" value="+ id: int&#xa;+ user_id: int&#xa;+ ip_address: string&#xa;+ user_agent: string&#xa;+ statut: string&#xa;+ created_at: datetime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="loginhistory-class">
+          <mxGeometry y="26" width="200" height="114" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="tcnotification-class" value="TcNotification" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#d4e6f1;strokeColor:#2874a6;" vertex="1" parent="1">
+          <mxGeometry x="780" y="250" width="200" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="tcnotification-attr" value="+ id: int&#xa;+ user_id: int&#xa;+ fichier_id: int&#xa;+ titre: string&#xa;+ message: string&#xa;+ type: string&#xa;+ lue: boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="tcnotification-class">
+          <mxGeometry y="26" width="200" height="114" as="geometry" />
+        </mxCell>
+        
+        <!-- ==================== MODELS (Row 2) - Fichier Central ==================== -->
+        <mxCell id="tcfichier-class" value="TcFichier" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#d4e6f1;strokeColor:#2874a6;" vertex="1" parent="1">
+          <mxGeometry x="400" y="500" width="230" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="tcfichier-attr" value="+ id: int&#xa;+ nom_fichier: string&#xa;+ chemin_complet: string&#xa;+ type_valeur: string&#xa;+ statut: string&#xa;+ nb_transactions: int&#xa;+ nb_rejets: int&#xa;+ montant_total: decimal&#xa;+ date_reception: datetime&#xa;+ uploaded_by: int&#xa;+ valide_par: int&#xa;+ date_validation: datetime&#xa;+ commentaire_rejet: string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="tcfichier-class">
+          <mxGeometry y="26" width="230" height="214" as="geometry" />
+        </mxCell>
+        
+        <!-- ==================== MODELS (Row 3) - Enregistrements ==================== -->
+        <mxCell id="tcenrdetail-class" value="TcEnrDetail" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#d4e6f1;strokeColor:#2874a6;" vertex="1" parent="1">
+          <mxGeometry x="50" y="500" width="220" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="tcenrdetail-attr" value="+ id: int&#xa;+ fichier_id: int&#xa;+ type_valeur: string&#xa;+ montant: decimal&#xa;+ rib_donneur: string&#xa;+ nom_donneur: string&#xa;+ rib_beneficiaire: string&#xa;+ nom_beneficiaire: string&#xa;+ date_compensation: datetime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="tcenrdetail-class">
+          <mxGeometry y="26" width="220" height="174" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="tcenrglobal-class" value="TcEnrGlobal" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#d4e6f1;strokeColor:#2874a6;" vertex="1" parent="1">
+          <mxGeometry x="310" y="780" width="220" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="tcenrglobal-attr" value="+ id: int&#xa;+ fichier_id: int&#xa;+ sens: string&#xa;+ code_valeur: string&#xa;+ nature_remettant: string&#xa;+ code_remettant: string&#xa;+ date_operation: date&#xa;+ numero_lot: string&#xa;+ montant_total_virements: decimal&#xa;+ nombre_total_virements: int" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="tcenrglobal-class">
+          <mxGeometry y="26" width="220" height="144" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="tcrejet-class" value="TcRejet" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#d4e6f1;strokeColor:#2874a6;" vertex="1" parent="1">
+          <mxGeometry x="600" y="500" width="220" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="tcrejet-attr" value="+ id: int&#xa;+ fichier_id: int&#xa;+ detail_id: int&#xa;+ code_rejet: string&#xa;+ motif_rejet: string&#xa;+ etape_detection: string&#xa;+ traite: boolean&#xa;+ date_traitement: datetime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="tcrejet-class">
+          <mxGeometry y="26" width="220" height="134" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="tccommentaire-class" value="TcCommentaire" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#d4e6f1;strokeColor:#2874a6;" vertex="1" parent="1">
+          <mxGeometry x="880" y="500" width="200" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="tccommentaire-attr" value="+ id: int&#xa;+ fichier_id: int&#xa;+ user_id: int&#xa;+ contenu: string&#xa;+ type: string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="tccommentaire-class">
+          <mxGeometry y="26" width="200" height="94" as="geometry" />
+        </mxCell>
+        
+        <!-- ==================== MODELS (Row 4) - XML & Logs ==================== -->
+        <mxCell id="tcxmlproduit-class" value="TcXmlProduit" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#d4e6f1;strokeColor:#2874a6;" vertex="1" parent="1">
+          <mxGeometry x="50" y="780" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="tcxmlproduit-attr" value="+ id: int&#xa;+ fichier_id: int&#xa;+ contenu_xml: text" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="tcxmlproduit-class">
+          <mxGeometry y="26" width="180" height="74" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="tclogstraitement-class" value="TcLogsTraitement" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#d4e6f1;strokeColor:#2874a6;" vertex="1" parent="1">
+          <mxGeometry x="570" y="780" width="200" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="tclogstraitement-attr" value="+ id: int&#xa;+ fichier_id: int&#xa;+ etape: string&#xa;+ niveau: string (INFO|WARNING|ERROR)&#xa;+ message: string&#xa;+ donnees_contexte: json&#xa;+ created_at: datetime" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="tclogstraitement-class">
+          <mxGeometry y="26" width="200" height="114" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="tcpacs004-class" value="TcPacs004" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#d4e6f1;strokeColor:#2874a6;" vertex="1" parent="1">
+          <mxGeometry x="830" y="780" width="220" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="tcpacs004-attr" value="+ id: int&#xa;+ fichier_id: int&#xa;+ rejet_id: int&#xa;+ msg_id: string&#xa;+ nb_of_txs: int&#xa;+ cre_dt_tm: datetime&#xa;+ devise: string&#xa;+ dbtr_nm: string&#xa;+ cdtr_nm: string&#xa;+ motif_rejet: string&#xa;+ libelle_rejet: string&#xa;+ contenu_xml: text&#xa;+ valide_xsd: boolean&#xa;+ statut: string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="tcpacs004-class">
+          <mxGeometry y="26" width="220" height="154" as="geometry" />
+        </mxCell>
+        
+        <!-- ==================== SERVICES ==================== -->
+        <mxCell id="auditservice-class" value="AuditService" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#c8e6c9;strokeColor:#2e7d32;" vertex="1" parent="1">
+          <mxGeometry x="50" y="1050" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="auditservice-methods" value="+ enregistrer(action, module): void" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="auditservice-class">
+          <mxGeometry y="26" width="220" height="54" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="logservice-class" value="LogService" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#c8e6c9;strokeColor:#2e7d32;" vertex="1" parent="1">
+          <mxGeometry x="300" y="1050" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="logservice-methods" value="+ info(id, etape, msg): void&#xa;+ warning(id, etape, msg): void&#xa;+ erreur(id, etape, msg): void" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="logservice-class">
+          <mxGeometry y="26" width="200" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="logservice-impl" value="implements LoggerInterface" style="text;fontSize=9;fillColor=none;strokeColor=none;align=center;" vertex="1" parent="logservice-class">
+          <mxGeometry y="80" width="200" height="14" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="envparserservice-class" value="EnvParserService" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#c8e6c9;strokeColor:#2e7d32;" vertex="1" parent="1">
+          <mxGeometry x="550" y="1050" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="envparserservice-methods" value="+ parse(fichier): array&#xa;+ extraireEnregistrements(): array" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="envparserservice-class">
+          <mxGeometry y="26" width="220" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="envparserservice-impl" value="implements ParserInterface" style="text;fontSize=9;fillColor=none;strokeColor=none;align=center;" vertex="1" parent="envparserservice-class">
+          <mxGeometry y="80" width="220" height="14" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="ribvalidatorservice-class" value="RibValidatorService" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#c8e6c9;strokeColor:#2e7d32;" vertex="1" parent="1">
+          <mxGeometry x="820" y="1050" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ribvalidatorservice-methods" value="+ valider(rib): bool" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="ribvalidatorservice-class">
+          <mxGeometry y="26" width="220" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="ribvalidatorservice-impl" value="implements ValidatorInterface" style="text;fontSize=9;fillColor=none;strokeColor=none;align=center;" vertex="1" parent="ribvalidatorservice-class">
+          <mxGeometry y="80" width="220" height="14" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="validationservice-class" value="ValidationService" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#c8e6c9;strokeColor:#2e7d32;" vertex="1" parent="1">
+          <mxGeometry x="50" y="1200" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="validationservice-attr" value="- auditService: AuditService" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="validationservice-class">
+          <mxGeometry y="26" width="240" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="validationservice-sep" value="" style="line;strokeWidth=1;fillColor=none;" vertex="1" parent="validationservice-class">
+          <mxGeometry y="50" width="240" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="validationservice-methods" value="+ soumettreValidation(fichier): void" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="validationservice-class">
+          <mxGeometry y="58" width="240" height="42" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="fichiertrait-class" value="FichierTraitementService" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#c8e6c9;strokeColor:#2e7d32;" vertex="1" parent="1">
+          <mxGeometry x="330" y="1200" width="280" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="fichiertrait-attr" value="- parser: ParserInterface&#xa;- validator: ValidatorInterface&#xa;- transformer: TransformerInterface&#xa;- logService: LogService" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="fichiertrait-class">
+          <mxGeometry y="26" width="280" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="fichiertrait-sep" value="" style="line;strokeWidth=1;fillColor=none;" vertex="1" parent="fichiertrait-class">
+          <mxGeometry y="80" width="280" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="fichiertrait-methods" value="+ traiterFichier(fichier): void" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="fichiertrait-class">
+          <mxGeometry y="88" width="280" height="32" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="xmltransformer-class" value="XmlTransformerService" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#c8e6c9;strokeColor:#2e7d32;" vertex="1" parent="1">
+          <mxGeometry x="660" y="1200" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="xmltransformer-methods" value="+ transformer(donnees): string&#xa;+ getTypeMessage(): string" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="xmltransformer-class">
+          <mxGeometry y="26" width="220" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="xmltransformer-impl" value="implements TransformerInterface" style="text;fontSize=9;fillColor=none;strokeColor=none;align=center;" vertex="1" parent="xmltransformer-class">
+          <mxGeometry y="80" width="220" height="14" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pacs004transformer-class" value="Pacs004TransformerService" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#c8e6c9;strokeColor:#2e7d32;" vertex="1" parent="1">
+          <mxGeometry x="930" y="1200" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="pacs004transformer-methods" value="+ genererPourFichier(id): array" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="pacs004transformer-class">
+          <mxGeometry y="26" width="240" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="pacs004transformer-note" value="Transforme PACS004 (rejet)" style="text;fontSize=9;fillColor=none;strokeColor=none;align=center;" vertex="1" parent="pacs004transformer-class">
+          <mxGeometry y="80" width="240" height="14" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="exportservice-class" value="ExportService" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor:#c8e6c9;strokeColor:#2e7d32;" vertex="1" parent="1">
+          <mxGeometry x="550" y="1350" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="exportservice-methods" value="+ exporterEnRapport(): file" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" vertex="1" parent="exportservice-class">
+          <mxGeometry y="26" width="200" height="54" as="geometry" />
+        </mxCell>
+        
+        <!-- ==================== RELATIONS ==================== -->
+        <!-- User Relations -->
+        <mxCell id="rel-user-tcfichier" value="upload/valide" style="html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;rounded=0;fontSize=9;" edge="1" parent="1" source="user-class" target="tcfichier-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="130" y="430" as="sourcePoint" />
+            <mxPoint x="515" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="rel-user-audit" value="" style="html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;rounded=0;" edge="1" parent="1" source="user-class" target="audittrail-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="130" y="430" as="sourcePoint" />
+            <mxPoint x="380" y="430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="rel-user-login" value="" style="html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;rounded=0;" edge="1" parent="1" source="user-class" target="loginhistory-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="230" y="340" as="sourcePoint" />
+            <mxPoint x="630" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="rel-user-notif" value="" style="html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;rounded=0;" edge="1" parent="1" source="user-class" target="tcnotification-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="230" y="340" as="sourcePoint" />
+            <mxPoint y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="rel-user-comment" value="" style="html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;rounded=0;" edge="1" parent="1" source="user-class" target="tccommentaire-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="230" y="340" as="sourcePoint" />
+            <mxPoint y="580" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- TcFichier Relations -->
+        <mxCell id="rel-tcfich-enrdetail" value="" style="html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;rounded=0;" edge="1" parent="1" source="tcfichier-class" target="tcenrdetail-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="400" y="600" as="sourcePoint" />
+            <mxPoint y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="rel-tcfich-enrglobal" value="" style="html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;rounded=0;" edge="1" parent="1" source="tcfichier-class" target="tcenrglobal-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="400" y="740" as="sourcePoint" />
+            <mxPoint y="780" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="rel-tcfich-tcrejet" value="" style="html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;rounded=0;" edge="1" parent="1" source="tcfichier-class" target="tcrejet-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="630" y="600" as="sourcePoint" />
+            <mxPoint y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="rel-tcfich-tcxml" value="" style="html=1;endArrow=ERone;startArrow=ERone;endFill=0;startFill=0;rounded=0;" edge="1" parent="1" source="tcfichier-class" target="tcxmlproduit-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="400" y="740" as="sourcePoint" />
+            <mxPoint y="780" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="rel-tcfich-tccomment" value="" style="html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;rounded=0;" edge="1" parent="1" source="tcfichier-class" target="tccommentaire-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint y="600" as="sourcePoint" />
+            <mxPoint y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="rel-tcfich-logs" value="" style="html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;rounded=0;" edge="1" parent="1" source="tcfichier-class" target="tclogstraitement-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint y="740" as="sourcePoint" />
+            <mxPoint y="780" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="rel-tcfich-tcpacs" value="" style="html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;rounded=0;" edge="1" parent="1" source="tcfichier-class" target="tcpacs004-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint y="740" as="sourcePoint" />
+            <mxPoint y="780" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="rel-tcfich-notif" value="" style="html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;rounded=0;" edge="1" parent="1" source="tcfichier-class" target="tcnotification-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint y="500" as="sourcePoint" />
+            <mxPoint y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- TcEnrDetail to TcRejet -->
+        <mxCell id="rel-enrdetail-tcrejet" value="" style="html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;rounded=0;" edge="1" parent="1" source="tcenrdetail-class" target="tcrejet-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint y="600" as="sourcePoint" />
+            <mxPoint y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- TcRejet to TcPacs004 -->
+        <mxCell id="rel-tcrejet-tcpacs" value="" style="html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;rounded=0;" edge="1" parent="1" source="tcrejet-class" target="tcpacs004-class">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint y="660" as="sourcePoint" />
+            <mxPoint y="780" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

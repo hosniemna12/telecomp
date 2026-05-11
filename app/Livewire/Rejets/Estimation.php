@@ -68,48 +68,39 @@ class Estimation extends Component
         $this->error = null;
 
         try {
-            // Préparer les données pour le ML
-            $data = [
-                'montant'                  => (int) $this->montant,
-                'type_valeur'              => $this->type_valeur,
-                'code_banque_don'          => $this->code_banque_don,
-                'code_banque_dest'         => $this->code_banque_dest,
-                'rib_donneur_valide'       => (int) $this->rib_donneur_valide,
-                'rib_beneficiaire_valide'  => (int) $this->rib_beneficiaire_valide,
-                'jour_semaine'             => (int) $this->jour_semaine,
-                'est_fin_mois'             => (int) $this->est_fin_mois,
-                'echeance_depassee'        => (int) $this->echeance_depassee,
-                'ratio_provision'          => (float) $this->ratio_provision,
-                'montant_provision'        => (float) $this->montant_provision,
-                'sens'                     => $this->sens,
-                'situation_donneur'        => $this->situation_donneur,
-                'type_compte'              => $this->type_compte,
-            ];
+            // Utilise localhost au lieu de docker hostname
+            $response = Http::post('http://127.0.0.1:5000/predict', [
+                'type_valeur' => $this->type_valeur,
+                'montant' => $this->montant,
+                'code_banque_don' => $this->code_banque_don,
+                'code_banque_dest' => $this->code_banque_dest,
+                'rib_donneur_valide' => $this->rib_donneur_valide,
+                'rib_beneficiaire_valide' => $this->rib_beneficiaire_valide,
+                'jour_semaine' => $this->jour_semaine,
+                'est_fin_mois' => $this->est_fin_mois,
+                'echeance_depassee' => $this->echeance_depassee,
+                'ratio_provision' => $this->ratio_provision,
+                'montant_provision' => $this->montant_provision,
+                'sens' => $this->sens,
+                'situation_donneur' => $this->situation_donneur,
+                'type_compte' => $this->type_compte,
+            ]);
 
-            // Appeler le serveur ML Flask
-            $mlServerUrl = config('services.ml.url') ?? 'http://ml:5000';
-            $response = Http::timeout(10)
-                ->post("{$mlServerUrl}/predict", $data);
+            $data = $response->json();
+            $this->score = $data['score'];
+            $this->couleur = $data['couleur'];
+            $this->rejete = $data['rejete'];
+            $this->proba = $data['proba'];
 
-            if ($response->successful()) {
-                $result = $response->json();
-                $this->score = $result['score'];
-                $this->couleur = $result['couleur'];
-                $this->rejete = $result['rejete'];
-                $this->proba = $result['proba'];
-
-                // Log de l'estimation
-                \Illuminate\Support\Facades\Log::info('Estimation ML effectuée', [
-                    'montant' => $this->montant,
-                    'score' => $this->score,
-                    'couleur' => $this->couleur,
-                ]);
-            } else {
-                $this->error = "Erreur serveur ML: " . $response->status();
-            }
+            // Log de l'estimation
+            \Illuminate\Support\Facades\Log::info('Estimation ML effectuée', [
+                'montant' => $this->montant,
+                'score' => $this->score,
+                'couleur' => $this->couleur,
+            ]);
         } catch (\Exception $e) {
-            $this->error = "Erreur de connexion: " . $e->getMessage();
-            \Illuminate\Support\Facades\Log::error('Erreur ML', ['exception' => $e]);
+            $this->error = "Erreur ML: " . $e->getMessage();
+            \Log::error('Erreur ML:', ['error' => $e->getMessage()]);
         } finally {
             $this->loading = false;
         }

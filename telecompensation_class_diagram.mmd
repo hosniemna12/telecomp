@@ -1,0 +1,362 @@
+classDiagram
+    %% Models
+    class User {
+        +String name
+        +String email
+        +String role
+        +bool isAdmin()
+        +bool isOperateur()
+        +bool isSuperviseur()
+    }
+
+    class TcFichier {
+        +String nom_fichier
+        +String chemin_complet
+        +String type_valeur
+        +String code_enregistrement
+        +String code_devise
+        +String statut
+        +int nb_transactions
+        +int nb_rejets
+        +decimal montant_total
+        +datetime date_reception
+        +datetime date_validation
+        +int uploaded_by
+        +int valide_par
+        +String commentaire_rejet
+        +enregistrementsDetails()
+        +enregistrementsGlobaux()
+        +rejets()
+        +xmlProduit()
+        +uploader()
+        +valideur()
+        +commentaires()
+        +notifications()
+        +logsTraitement()
+    }
+
+    class TcEnrDetail {
+        +int fichier_id
+        +String numero_virement
+        +String rib_donneur
+        +String rib_beneficiaire
+        +decimal montant
+        +String motif_rejet
+        +fichier()
+        +rejets()
+    }
+
+    class TcEnrGlobal {
+        +int fichier_id
+        +String code_valeur
+        +String code_devise
+        +fichier()
+    }
+
+    class TcRejet {
+        +int fichier_id
+        +int detail_id
+        +String code_rejet
+        +String motif_rejet
+        +String etape_detection
+        +bool traite
+        +fichier()
+        +detail()
+        +pacs004()
+    }
+
+    class TcPacs004 {
+        +int fichier_id
+        +int rejet_id
+        +String msg_id
+        +String contenu_xml
+        +bool valide_xsd
+        +String statut
+        +fichier()
+        +rejet()
+    }
+
+    class TcXmlProduit {
+        +int fichier_id
+        +String contenu_xml
+        +fichier()
+    }
+
+    class TcCommentaire {
+        +int fichier_id
+        +int user_id
+        +String contenu
+        +String type
+        +fichier()
+        +user()
+    }
+
+    class TcNotification {
+        +int user_id
+        +int fichier_id
+        +String titre
+        +String message
+        +String type
+        +bool lu
+        +fichier()
+        +user()
+    }
+
+    class TcLogsTraitement {
+        +int fichier_id
+        +String etape
+        +String niveau
+        +String message
+        +String donnees_contexte
+        +datetime created_at
+        +fichier()
+    }
+
+    class AuditTrail {
+        +int user_id
+        +String action
+        +String module
+        +String description
+        +String statut
+        +datetime created_at
+        +user()
+    }
+
+    class LoginHistory {
+        +int user_id
+        +datetime login_at
+        +user()
+    }
+
+    %% Interfaces
+    class ParserInterface {
+        <<interface>>
+        +parse(cheminFichier) array
+        +supporte(cheminFichier) bool
+    }
+
+    class ValidatorInterface {
+        <<interface>>
+        +valider(donnees) bool
+        +getErreurs() array
+    }
+
+    class TransformerInterface {
+        <<interface>>
+        +transformer(donnees) String
+        +getTypeMessage() String
+    }
+
+    class LoggerInterface {
+        <<interface>>
+        +info(fichierId, etape, message, contexte)
+        +warning(fichierId, etape, message, contexte)
+        +erreur(fichierId, etape, message, contexte)
+    }
+
+    %% Services
+    class FichierTraitementService {
+        -ParserInterface parser
+        -ValidatorInterface validator
+        -TransformerInterface transformer
+        -LogService logService
+        +traiter(cheminFichier, typeForce) array
+    }
+
+    class EnvParserService {
+        +parse(cheminFichier) array
+        +supporte(cheminFichier) bool
+    }
+
+    class ValidatorService {
+        -RibValidatorService ribValidator
+        +valider(donnees) bool
+        +getErreurs() array
+    }
+
+    class XmlTransformerService {
+        +transformer(donnees) String
+        +getTypeMessage() String
+    }
+
+    class Pacs004TransformerService {
+        +genererPourFichier(fichierId) array
+    }
+
+    class ValidationService {
+        -AuditService audit
+        +soumettreValidation(fichier)
+        +valider(fichier, commentaire)
+        +rejeter(fichier, motif)
+        +commenter(fichier, contenu)
+        +marquerLu(notificationId)
+    }
+
+    class RibValidatorService {
+        +valider(rib) array
+        +calculerCle(rib) int
+    }
+
+    class AuditService {
+        +log(action, module, description, donneesAvant, donneesApres, statut)
+        +loginSuccess(email)
+        +loginFailed(email)
+    }
+
+    class LogService {
+        +info(fichierId, etape, message, contexte)
+        +warning(fichierId, etape, message, contexte)
+        +erreur(fichierId, etape, message, contexte)
+    }
+
+    class ExportService {
+        +getDonneesRapport(date, type) array
+        +genererPdf(donnees) String
+        +genererExcel(donnees) String
+    }
+
+    class RejetEstimationService {
+        +estimerRejets(donnees) array
+    }
+
+    %% Livewire Components
+    class Upload {
+        +traiter()
+        +reinitialiser()
+        +render()
+    }
+
+    class XmlViewer {
+        +render()
+    }
+
+    class Show {
+        +render()
+    }
+
+    class FichiersIndex {
+        +render()
+    }
+
+    class Dashboard {
+        +refresh()
+        +render()
+    }
+
+    class Notifications {
+        +mount()
+        +togglePanel()
+        +marquerLu(id)
+        +toutMarquerLu()
+        +render()
+    }
+
+    class Login {
+        +render()
+    }
+
+    class ProfileIndex {
+        +render()
+    }
+
+    class UsersIndex {
+        +render()
+    }
+
+    class Pacs004Generator {
+        +generer()
+        +voirXml(pacs004Id)
+        +marquerEnvoye(pacs004Id)
+        +render()
+    }
+
+    class RejetsIndex {
+        +render()
+    }
+
+    class Estimation {
+        +estimer()
+        +estimer_batch(transactions)
+        +tester_ml()
+        +render()
+    }
+
+    class RapportExport {
+        +generer()
+        +render()
+    }
+
+    class AuditIndex {
+        +render()
+    }
+
+    class StatsIndex {
+        +render()
+    }
+
+    %% Controllers / Middleware / Providers
+    class Controller
+    class RapportController {
+        +index()
+        +generer(request)
+    }
+    class CheckRole {
+        +handle(request, next, roles)
+    }
+    class AppServiceProvider {
+        +register()
+        +boot()
+    }
+
+    %% Relationships
+    User <|-- TcFichier : uploaded_by
+    User <|-- TcFichier : valide_par
+    User <|-- TcCommentaire : user_id
+    User <|-- TcNotification : user_id
+    User <|-- AuditTrail : user_id
+    User <|-- LoginHistory : user_id
+
+    TcFichier *-- TcEnrDetail : hasMany
+    TcFichier *-- TcEnrGlobal : hasMany
+    TcFichier *-- TcRejet : hasMany
+    TcFichier *-- TcCommentaire : hasMany
+    TcFichier *-- TcNotification : hasMany
+    TcFichier *-- TcLogsTraitement : hasMany
+    TcFichier o-- TcXmlProduit : hasOne
+    TcEnrDetail *-- TcRejet : hasMany
+
+    TcRejet --> TcEnrDetail : belongsTo
+    TcPacs004 --> TcFichier : belongsTo
+    TcPacs004 --> TcRejet : belongsTo
+    TcNotification --> TcFichier : belongsTo
+    TcCommentaire --> TcFichier : belongsTo
+    TcLogsTraitement --> TcFichier : belongsTo
+    TcEnrGlobal --> TcFichier : belongsTo
+    TcEnrDetail --> TcFichier : belongsTo
+    TcXmlProduit --> TcFichier : belongsTo
+    TcRejet --> TcFichier : belongsTo
+
+    ParserInterface <|.. EnvParserService : implements
+    ValidatorInterface <|.. ValidatorService : implements
+    TransformerInterface <|.. XmlTransformerService : implements
+    LoggerInterface <|.. LogService : implements
+
+    FichierTraitementService ..> ParserInterface : uses
+    FichierTraitementService ..> ValidatorInterface : uses
+    FichierTraitementService ..> TransformerInterface : uses
+    FichierTraitementService ..> LogService : uses
+    ValidatorService ..> RibValidatorService : uses
+    ValidationService ..> AuditService : uses
+    RapportController ..> ExportService : uses
+
+    Upload ..> FichierTraitementService : uses
+    Upload ..> AuditService : uses
+    Pacs004Generator ..> Pacs004TransformerService : uses
+    Pacs004Generator ..> AuditService : uses
+    RapportExport ..> ExportService : uses
+
+    AppServiceProvider ..> ParserInterface : binds
+    AppServiceProvider ..> ValidatorInterface : binds
+    AppServiceProvider ..> TransformerInterface : binds
+    AppServiceProvider ..> LoggerInterface : binds
+    AppServiceProvider ..> ValidationService : singleton
