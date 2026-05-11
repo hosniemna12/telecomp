@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\TcNotification;
 use App\Models\User;
 use App\Services\Audit\LogService;
+use App\Services\Ml\MlScoringService;
 
 class FichierTraitementService
 {
@@ -24,128 +25,20 @@ class FichierTraitementService
     protected ValidatorInterface   $validator;
     protected TransformerInterface $transformer;
     protected LogService           $logService;
+    protected MlScoringService    $mlScoring;
 
     public function __construct(
         ParserInterface      $parser,
         ValidatorInterface   $validator,
         TransformerInterface $transformer,
-        LogService           $logService
+        LogService           $logService,
+        MlScoringService     $mlScoring
     ) {
         $this->parser      = $parser;
         $this->validator   = $validator;
         $this->transformer = $transformer;
         $this->logService  = $logService;
-    }
-
-    // ──────────────────────────────────────────────────────────────
-    // ESTIMATION ML — Appel Flask pour une transaction (10 features)
-    // ──────────────────────────────────────────────────────────────
-    private function estimerRejet(array $detail, array $global = []): array
-    {
-        try {
-            $mlUrl    = config('services.ml.url', 'http://127.0.0.1:5000');
-            $rib_don  = trim($detail['rib_donneur']      ?? '');
-            $rib_dest = trim($detail['rib_beneficiaire'] ?? '');
-
-            // ── Validation des RIBs par modulo 97 (algorithme officiel BCT) ──
-            $rib_don_valide  = $this->verifierRibModulo97($rib_don)  ? 1 : 0;
-            $rib_dest_valide = $this->verifierRibModulo97($rib_dest) ? 1 : 0;
-
-            // ── Codes banques (extraits des RIBs) ─────────────────
-            $code_banque_don  = strlen($rib_don)  >= 2 ? substr($rib_don,  0, 2) : '26';
-            $code_banque_dest = strlen($rib_dest) >= 2 ? substr($rib_dest, 0, 2) : '26';
-            $meme_banque      = ($code_banque_don === $code_banque_dest) ? 1 : 0;
-
-            // ── Calcul echeance depassee ──────────────────────────
-            $echeance_depassee = 0;
-            $dateEcheance = $detail['date_echeance']
-                         ?? $detail['date_compensation']
-                         ?? '';
-            if (!empty($dateEcheance) && strlen($dateEcheance) >= 8) {
-                try {
-                    $dateStr = preg_replace('/[^0-9]/', '', $dateEcheance);
-                    if (strlen($dateStr) === 8) {
-                        $annee = (int)substr($dateStr, 0, 4);
-                        $date = ($annee >= 1900 && $annee <= 2100)
-                            ? \DateTime::createFromFormat('Ymd', $dateStr)
-                            : \DateTime::createFromFormat('dmY', $dateStr);
-                        if ($date && $date < new \DateTime('today')) {
-                            $echeance_depassee = 1;
-                        }
-                    }
-                } catch (\Exception $e) {
-                    // Date invalide → on garde 0
-                }
-            }
-
-            // ── Construction du payload (10 features alignees avec le notebook) ──
-            $payload = [
-                'type_valeur'             => $detail['type_valeur']       ?? '10',
-                'montant'                 => (float)($detail['montant']   ?? 0),
-                'code_banque_don'         => $code_banque_don,
-                'code_banque_dest'        => $code_banque_dest,
-                'rib_donneur_valide'      => $rib_don_valide,
-                'rib_beneficiaire_valide' => $rib_dest_valide,
-                'echeance_depassee'       => $echeance_depassee,
-                'meme_banque'             => $meme_banque,
-                'situation_donneur'       => $detail['situation_donneur'] ?? '0',
-                'type_compte'             => $detail['type_compte']       ?? '1',
-            ];
-
-            $response = Http::timeout(5)->post("{$mlUrl}/predict", $payload);
-
-            if ($response->successful()) {
-                $result = $response->json();
-
-                // ── Boost SIBTEL : si rejet deja detecte, score min 75 ──
-                $motifRejet = trim($detail['motif_rejet'] ?? '00000000');
-                $aDejaUnRejet = !empty($motifRejet) && $motifRejet !== '00000000';
-
-                if ($aDejaUnRejet && ($result['score'] ?? 0) < 75) {
-                    $result['score']   = 80;
-                    $result['couleur'] = 'rouge';
-                    $result['rejete']  = true;
-                    $result['explications'] = $result['explications'] ?? [];
-                    array_unshift($result['explications'], [
-                        'feature' => 'motif_rejet',
-                        'libelle' => 'Code de rejet SIBTEL detecte',
-                        'detail'  => 'Code : ' . substr($motifRejet, 0, 2),
-                        'gravite' => 'haute',
-                    ]);
-                    $result['explications'] = array_slice($result['explications'], 0, 3);
-                }
-
-                return $result;
-            }
-
-            return ['score' => null, 'couleur' => null, 'rejete' => null, 'proba' => null, 'explications' => []];
-
-        } catch (\Exception $e) {
-            Log::warning('ML estimation failed: ' . $e->getMessage());
-            return ['score' => null, 'couleur' => null, 'rejete' => null, 'proba' => null, 'explications' => []];
-        }
-    }
-
-    /**
-     * Verifie la cle d'un RIB tunisien (modulo 97).
-     * Format attendu : 20 chiffres (banque + agence + compte + cle).
-     *
-     * @param  string  $rib  RIB a verifier
-     * @return bool   true si la cle est valide, false sinon
-     */
-    private function verifierRibModulo97(string $rib): bool
-    {
-        if (strlen($rib) !== 20 || !ctype_digit($rib)) {
-            return false;
-        }
-
-        $rib_partiel = substr($rib, 0, 18);   // banque + agence + compte (18 chiffres)
-        $cle_fournie = (int)substr($rib, 18); // 2 derniers chiffres
-
-        // Calcul modulo 97 avec bcmod pour gerer les grands nombres (18+ chiffres)
-        $cle_calculee = 97 - (int)bcmod($rib_partiel . '00', '97');
-
-        return $cle_calculee === $cle_fournie;
+        $this->mlScoring   = $mlScoring;
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -261,7 +154,7 @@ class FichierTraitementService
                 $detailsModels[] = $detailModel;
 
                 // ── Estimation ML ──────────────────────────────────
-                $mlResult = $this->estimerRejet($detail, $global ?? []);
+                $mlResult = $this->mlScoring->estimer($detail, $global ?? []);
 
                 if ($mlResult['score'] !== null) {
                     $mlStats['disponible'] = true;
