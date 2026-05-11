@@ -6,7 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use App\Models\User;
-use App\Services\AuditService;
+use App\Services\Audit\AuditService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 

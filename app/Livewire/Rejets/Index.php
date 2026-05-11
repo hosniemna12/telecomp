@@ -6,7 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use App\Models\TcRejet;
-use App\Services\AuditService;
+use App\Services\Audit\AuditService;
 
 #[Layout('layouts.app')]
 class Index extends Component

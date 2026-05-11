@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\ExportService;
+use App\Services\Export\ExportService;
 
 class RapportController extends Controller
 {

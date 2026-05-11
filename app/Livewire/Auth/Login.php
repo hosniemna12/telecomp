@@ -5,7 +5,7 @@ namespace App\Livewire\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
-use App\Services\AuditService;
+use App\Services\Audit\AuditService;
 
 #[Layout('layouts.guest')]
 class Login extends Component

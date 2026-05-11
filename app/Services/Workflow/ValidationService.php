@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Workflow;
 
 use App\Models\TcFichier;
 use App\Models\TcCommentaire;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Audit;
 
 use App\Contracts\LoggerInterface;
 use App\Models\TcLogsTraitement;

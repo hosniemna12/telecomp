@@ -7,8 +7,8 @@ use Livewire\WithPagination;
 use Livewire\Attributes\Layout;
 use App\Models\TcFichier;
 use App\Models\TcPacs004;
-use App\Services\Pacs004TransformerService;
-use App\Services\AuditService;
+use App\Services\Transformation\Pacs004TransformerService;
+use App\Services\Audit\AuditService;
 use Illuminate\Support\Facades\Log;
 
 #[Layout('layouts.app')]

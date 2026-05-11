@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Audit;
 
 use App\Models\AuditTrail;
 use Illuminate\Support\Facades\Auth;

@@ -4,7 +4,7 @@ namespace App\Livewire\Outils;
 
 use Livewire\Component;
 use Livewire\Attributes\Layout;
-use App\Services\RibValidatorService;
+use App\Services\Validation\RibValidatorService;
 
 #[Layout('layouts.app')]
 class VerificateurRib extends Component

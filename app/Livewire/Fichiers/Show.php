@@ -6,9 +6,9 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use App\Models\TcFichier;
 use App\Models\TcCommentaire;
-use App\Services\ValidationService;
-use App\Services\XmlTransformerService;
-use App\Services\AuditService;
+use App\Services\Workflow\ValidationService;
+use App\Services\Transformation\XmlTransformerService;
+use App\Services\Audit\AuditService;
 use Illuminate\Support\Facades\Auth;
 
 #[Layout('layouts.app')]

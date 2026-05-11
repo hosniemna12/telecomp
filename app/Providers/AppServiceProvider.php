@@ -7,11 +7,11 @@ use App\Contracts\ParserInterface;
 use App\Contracts\ValidatorInterface;
 use App\Contracts\TransformerInterface;
 use App\Contracts\LoggerInterface;
-use App\Services\EnvParserService;
-use App\Services\ValidatorService;
-use App\Services\XmlTransformerService;
-use App\Services\LogService;
-use App\Services\ValidationService;
+use App\Services\Parsing\EnvParserService;
+use App\Services\Validation\ValidatorService;
+use App\Services\Transformation\XmlTransformerService;
+use App\Services\Audit\LogService;
+use App\Services\Workflow\ValidationService;
 
 class AppServiceProvider extends ServiceProvider
 {

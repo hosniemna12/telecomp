@@ -5,8 +5,8 @@ namespace App\Livewire\Fichiers;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Layout;
-use App\Services\FichierTraitementService;
-use App\Services\AuditService;
+use App\Services\Orchestration\FichierTraitementService;
+use App\Services\Audit\AuditService;
 
 #[Layout('layouts.app')]
 class Upload extends Component
