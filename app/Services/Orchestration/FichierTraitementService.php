@@ -19,6 +19,7 @@ use App\Models\User;
 use App\Services\Audit\LogService;
 use App\Services\Ml\MlScoringService;
 use App\Services\Persistence\FichierPersistenceService;
+use App\Services\Notification\NotificationDispatchService;
 
 class FichierTraitementService
 {
@@ -28,6 +29,7 @@ class FichierTraitementService
     protected LogService           $logService;
     protected MlScoringService    $mlScoring;
     protected FichierPersistenceService $persistence;
+    protected NotificationDispatchService $notifier;
 
     public function __construct(
         ParserInterface      $parser,
@@ -35,7 +37,8 @@ class FichierTraitementService
         TransformerInterface $transformer,
         LogService           $logService,
         MlScoringService     $mlScoring,
-        FichierPersistenceService $persistence
+        FichierPersistenceService $persistence,
+        NotificationDispatchService $notifier
     ) {
         $this->parser      = $parser;
         $this->validator   = $validator;
@@ -43,6 +46,7 @@ class FichierTraitementService
         $this->logService  = $logService;
         $this->mlScoring   = $mlScoring;
         $this->persistence = $persistence;
+        $this->notifier    = $notifier;
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -291,20 +295,8 @@ class FichierTraitementService
                 'montant_total'   => $montantTotal,
                 'uploaded_by'     => $user->id,
             ]);
-
-            // Notifier superviseurs si operateur
-            if ($role === 'operateur' && $statut === 'EN_ATTENTE_VALIDATION') {
-                $superviseurs = User::whereIn('role', ['superviseur', 'admin'])->get();
-                foreach ($superviseurs as $sup) {
-                    TcNotification::create([
-                        'user_id'    => $sup->id,
-                        'titre'      => 'Nouveau fichier a valider',
-                        'message'    => "L'operateur {$user->name} a soumis {$fichier->nom_fichier} — {$nbValides} transactions valides.",
-                        'type'       => 'UPLOAD',
-                        'fichier_id' => $fichier->id,
-                    ]);
-                }
-            }
+            // Notifier superviseurs si operateur a soumis un fichier en attente
+            $this->notifier->notifierNouveauFichier($fichier, $user, $nbValides, $statut);
 
             DB::commit();
 
