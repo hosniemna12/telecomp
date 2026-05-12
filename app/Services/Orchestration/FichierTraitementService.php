@@ -4,7 +4,6 @@ namespace App\Services\Orchestration;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
 use App\Models\TcFichier;
 use App\Models\TcEnrGlobal;
 use App\Models\TcEnrDetail;
@@ -14,7 +13,6 @@ use App\Contracts\ParserInterface;
 use App\Contracts\ValidatorInterface;
 use App\Contracts\TransformerInterface;
 use Illuminate\Support\Facades\Auth;
-use App\Models\TcNotification;
 use App\Models\User;
 use App\Services\Audit\LogService;
 use App\Services\Ml\MlScoringService;
